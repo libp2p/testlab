@@ -1,0 +1,13 @@
+{
+  "Options": {
+    "Datacenters": ["dc1"],
+    "Priority": 1
+  },
+  "Name": "p2ptest",
+  "Deployments": [
+    {
+      "Name": "p2pd",
+      "Quantity": 5
+    }
+  ]
+}
