@@ -11,83 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Node interface {
-	Task() *napi.Task
-}
-
-type P2pdNode struct {
-}
-
-var _ Node = (*P2pdNode)(nil)
-
-func (n *P2pdNode) Task() *napi.Task {
-	task := napi.NewTask("p2pd", "exec")
-	task.SetConfig("command", "/usr/local/bin/p2pd")
-	task.SetConfig("args", []string{
-		"-listen", "/ip4/${NOMAD_IP_p2pd}/tcp/${NOMAD_PORT_p2pd}",
-	})
-	res := napi.DefaultResources()
-	res.Networks = []*napi.NetworkResource{
-		&napi.NetworkResource{
-			DynamicPorts: []napi.Port{
-				napi.Port{Label: "libp2p"},
-				napi.Port{Label: "p2pd"},
-			},
-		},
-	}
-	task.Require(res)
-
-	return task
-}
-
-// Deployment is a pair of a Node and a Quantity of that node to schedule in the
-// cluster.
-type Deployment struct {
-	Name string
-	// Node     Node
-	Quantity int
-}
-
-func (d *Deployment) TaskGroup() *napi.TaskGroup {
-	group := napi.NewTaskGroup(d.Name, d.Quantity)
-	group.Count = &d.Quantity
-	var node P2pdNode
-	group.AddTask(node.Task())
-	return group
-}
-
-type TopologyOptions struct {
-	Region      string
-	Priority    int
-	Datacenters []string
-}
-
-type Topology struct {
-	Options *TopologyOptions
-	// Name will be translated into a nomad job
-	Name string
-	// Deployments details the different deployments to schedule on the nomad
-	// cluster.
-	Deployments []*Deployment
-}
-
-func (t *Topology) Job() *napi.Job {
-	opts := t.Options
-	region := opts.Region
-	if opts.Region == "" {
-		region = "global"
-	}
-
-	job := napi.NewServiceJob(t.Name, t.Name, region, opts.Priority)
-	job.Datacenters = opts.Datacenters
-
-	for _, deployment := range t.Deployments {
-		job.AddTaskGroup(deployment.TaskGroup())
-	}
-
-	return job
-}
-
+// TestLab is the main entrypoint for manipulating the test cluster.
 type TestLab struct {
 	path       string
 	nomad      *napi.Client
@@ -95,7 +19,8 @@ type TestLab struct {
 }
 
 // NewTestlab initiates a testlab, with a path to the current state of the
-// testlab as well as a configuration for contacting the nomad cluster.
+// testlab as well as a configuration for contacting the nomad cluster. If nil,
+// nomadConfig will be populated with the defaults.
 func NewTestlab(path string, nomadConfig *napi.Config) (*TestLab, error) {
 	if nomadConfig == nil {
 		nomadConfig = napi.DefaultConfig()
@@ -158,7 +83,11 @@ func (t *TestLab) Deregister(jobID string) error {
 
 func (t *TestLab) Start(topology *Topology) error {
 	wopts := &napi.WriteOptions{}
-	resp, _, err := t.nomad.Jobs().Register(topology.Job(), wopts)
+	job, err := topology.Job()
+	if err != nil {
+		return err
+	}
+	resp, _, err := t.nomad.Jobs().Register(job, wopts)
 	if err == nil {
 		logrus.Infof("rendering topology in evaluation id %s took %s", resp.EvalID, resp.RequestTime.String())
 		return err
