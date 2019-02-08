@@ -15,6 +15,7 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 	command := "/usr/local/bin/p2pd"
 	args := []string{
 		"-listen", "/ip4/${NOMAD_IP_p2pd}/tcp/${NOMAD_PORT_p2pd}",
+		"-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}",
 	}
 
 	res := napi.DefaultResources()
