@@ -1,0 +1,25 @@
+{
+  "Options": {
+    "Datacenters": ["dc1"],
+    "Priority": 1
+  },
+  "Name": "p2ptest",
+  "Deployments": [
+    {
+      "Name": "peers",
+      "Plugin": "p2pd",
+      "Quantity": 15,
+      "Options": {
+        "Bootstrap": "gateway"
+      }
+    },
+    {
+      "Name": "gateways",
+      "Plugin": "p2pd",
+      "Quantity": 5,
+      "Options": {
+        "Service": "gateway"
+      }
+    }
+  ]
+}
