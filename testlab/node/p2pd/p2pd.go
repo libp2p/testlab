@@ -54,7 +54,6 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 				PortLabel: "libp2p",
 			}
 			task.Services = append(task.Services, svc)
-
 		}
 	}
 

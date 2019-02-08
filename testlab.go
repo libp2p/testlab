@@ -90,8 +90,7 @@ func (t *TestLab) Start(topology *Topology) error {
 	resp, _, err := t.nomad.Jobs().Register(job, wopts)
 	if err == nil {
 		logrus.Infof("rendering topology in evaluation id %s took %s", resp.EvalID, resp.RequestTime.String())
-		return err
+		err = ioutil.WriteFile(filepath.Join(t.path, "deployment"), []byte(topology.Name), 0644)
 	}
-	err = ioutil.WriteFile(filepath.Join(t.path, "deployment"), []byte(topology.Name), 644)
 	return err
 }
