@@ -67,7 +67,7 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 			Envvars:      &env,
 		}
 		task.Templates = append(task.Templates, template)
-		args = append(args, "-bootstrapPeers", "$")
+		args = append(args, "-bootstrapPeers", "${BOOTSTRAP_PEERS}")
 	}
 
 	task.SetConfig("command", command)
