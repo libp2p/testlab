@@ -8,7 +8,7 @@
     {
       "Name": "peers",
       "Plugin": "p2pd",
-      "Quantity": 15,
+      "Quantity": 3,
       "Options": {
         "Bootstrap": "gateway"
       }
@@ -16,7 +16,7 @@
     {
       "Name": "gateways",
       "Plugin": "p2pd",
-      "Quantity": 5,
+      "Quantity": 1,
       "Options": {
         "Service": "gateway"
       }
