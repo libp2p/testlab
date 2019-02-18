@@ -1,0 +1,87 @@
+{
+  "builders": [
+    {
+      "name": "testlab-base-vmware",
+      "type": "vmware-iso",
+      "iso_url": "http://cdimage.ubuntu.com/releases/18.04.2/release/ubuntu-18.04.2-server-amd64.iso",
+      "iso_checksum": "a2cb36dc010d98ad9253ea5ad5a07fd6b409e3412c48f1860536970b073c98f5",
+      "iso_checksum_type": "sha256",
+      "display_name": "testlab-base",
+      "vm_name": "testlab-base",
+      "ssh_username": "{{user `local_ssh_username`}}",
+      "ssh_password": "{{user `local_ssh_password`}}",
+      "shutdown_command": "echo '{{user `local_ssh_password`}}' | sudo -S shutdown -P now",
+      "floppy_files": ["preseed/ks.cfg"],
+      "boot_wait": "10s",
+      "boot_command": [
+        "<esc><wait><esc><wait><enter><wait>",
+        "/install/vmlinuz<wait>",
+        " auto<wait>",
+        " console-setup/ask_detect=false<wait>",
+        " console-setup/layoutcode=us<wait>",
+        " console-setup/modelcode=pc105<wait>",
+        " debconf/frontend=noninteractive<wait>",
+        " debian-installer=en_US<wait>",
+        " fb=false<wait>",
+        " initrd=/install/initrd.gz<wait>",
+        " kbd-chooser/method=us<wait>",
+        " keyboard-configuration/layout=USA<wait>",
+        " keyboard-configuration/variant=USA<wait>",
+        " locale=en_US<wait>",
+        " netcfg/get_domain=packer<wait>",
+        " netcfg/get_hostname=packer<wait>",
+        " grub-installer/bootdev=/dev/sda<wait>",
+        " noapic<wait>",
+        " preseed/file=/floppy/ks.cfg",
+        " -- <wait>",
+        "<enter><wait>"
+      ]
+    }
+  ],
+  "description": "a base image for testlab boxes",
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo '{{user `local_ssh_password`}}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "inline": [
+        "apt-get -y update",
+        "apt-get -y install curl zip unzip tar git build-essential",
+        "mkdir /ops",
+        "chown -R ubuntu:ubuntu /ops"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "scripts/nomad.sh",
+      "execute_command": "echo '{{user `local_ssh_password`}}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+    },
+    {
+      "type": "shell",
+      "script": "scripts/consul.sh",
+      "execute_command": "echo '{{user `local_ssh_password`}}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+    },
+    {
+      "type": "file",
+      "source": "./config",
+      "destination": "/ops/"
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo '{{user `local_ssh_password`}}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "inline": [
+        "cp /ops/config/consul.service /etc/systemd/system/consul.service",
+        "cp /ops/config/nomad.service /etc/systemd/system/nomad.service"
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "only": ["testlab-base-vmware"]
+    }
+  ],
+  "variables": {
+    "local_ssh_password": "ubuntu",
+    "local_ssh_username": "ubuntu"
+  }
+}
