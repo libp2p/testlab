@@ -12,6 +12,7 @@ var testLab *testlab.TestLab
 
 func main() {
 	app := cli.NewApp()
+	app.Usage = "A cluster-friendly testlab for deploying and measuring the perfomance of p2p applications"
 	app.Commands = []cli.Command{
 		Teardown,
 		Start,
