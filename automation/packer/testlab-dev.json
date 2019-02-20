@@ -10,7 +10,7 @@
       "ssh_username": "{{user `local_ssh_username`}}",
       "ssh_password": "{{user `local_ssh_password`}}",
       "shutdown_command": "echo '{{user `local_ssh_password`}}' | sudo -S shutdown -P now",
-      "floppy_files": ["preseed/ks.cfg"],
+      "floppy_files": ["automation/packer/preseed/ks.cfg"],
       "boot_wait": "10s",
       "boot_command": [
         "<esc><wait><esc><wait><enter><wait>",
@@ -41,12 +41,11 @@
       "iso_url": "http://cdimage.ubuntu.com/releases/18.04.2/release/ubuntu-18.04.2-server-amd64.iso",
       "iso_checksum": "a2cb36dc010d98ad9253ea5ad5a07fd6b409e3412c48f1860536970b073c98f5",
       "iso_checksum_type": "sha256",
-      "display_name": "testlab-dev",
       "vm_name": "testlab-dev",
       "ssh_username": "{{user `local_ssh_username`}}",
       "ssh_password": "{{user `local_ssh_password`}}",
       "shutdown_command": "echo '{{user `local_ssh_password`}}' | sudo -S shutdown -P now",
-      "floppy_files": ["preseed/ks.cfg"],
+      "floppy_files": ["automation/packer/preseed/ks.cfg"],
       "boot_wait": "10s",
       "boot_command": [
         "<esc><wait><esc><wait><enter><wait>",
@@ -87,25 +86,32 @@
     },
     {
       "type": "shell",
-      "script": "scripts/nomad.sh",
+      "script": "automation/packer/scripts/nomad.sh",
       "execute_command": "echo '{{user `local_ssh_password`}}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     },
     {
       "type": "shell",
-      "script": "scripts/consul.sh",
+      "script": "automation/packer/scripts/consul.sh",
       "execute_command": "echo '{{user `local_ssh_password`}}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     },
     {
       "type": "file",
-      "source": "./config",
+      "source": "automation/packer/config",
       "destination": "/ops/"
+    },
+    {
+      "type": "file",
+      "source": "./build/testlab-vm",
+      "destination": "/ops/testlab"
     },
     {
       "type": "shell",
       "execute_command": "echo '{{user `local_ssh_password`}}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
       "inline": [
-        "cp /ops/config/consul.service /etc/systemd/system/consul.service",
-        "cp /ops/config/nomad.service /etc/systemd/system/nomad.service"
+        "mv /ops/config/consul.service /etc/systemd/system/consul.service",
+        "mv /ops/config/nomad.service /etc/systemd/system/nomad.service",
+        "rmdir /ops/config",
+        "mv /ops/testlab /usr/local/bin/"
       ]
     }
   ],
