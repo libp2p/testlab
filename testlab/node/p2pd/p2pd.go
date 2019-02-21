@@ -35,8 +35,17 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 	}
 	task.Services = append(task.Services, p2pdSvc)
 
+	url := ""
+
 	if cid, ok := options["Cid"]; ok {
-		url := fmt.Sprintf("https://gateway.ipfs.io/ipfs/%s", cid)
+		url = fmt.Sprintf("https://gateway.ipfs.io/ipfs/%s", cid)
+	}
+
+	if urlOpt, ok := options["Fetch"]; ok {
+		url = urlOpt
+	}
+
+	if url != "" {
 		task.Artifacts = []*napi.TaskArtifact{
 			&napi.TaskArtifact{
 				GetterSource: utils.StringPtr(url),
