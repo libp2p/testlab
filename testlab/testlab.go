@@ -29,7 +29,7 @@ func main() {
 		path := c.String("root")
 
 		var err error
-		testLab, err = testlab.NewTestlab(path, nil)
+		testLab, err = testlab.NewTestlab(path)
 		return err
 	}
 	err := app.Run(os.Args)

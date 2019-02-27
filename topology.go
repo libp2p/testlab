@@ -22,7 +22,11 @@ func (d *Deployment) TaskGroup() (*napi.TaskGroup, error) {
 	if err != nil {
 		return nil, err
 	}
-	group.AddTask(node.Task(d.Options))
+	task, err := node.Task(d.Options)
+	if err != nil {
+		return nil, err
+	}
+	group.AddTask(task)
 	return group, nil
 }
 

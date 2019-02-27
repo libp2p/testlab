@@ -33,7 +33,6 @@ type ScenarioRunner struct {
 }
 
 func NewScenarioRunner() (*ScenarioRunner, error) {
-	// TODO: inject config into env
 	consulConfig := capi.DefaultConfig()
 	// TODO: make a fn for testing that allows users to pass this in
 	root, err := ioutil.TempDir(os.TempDir(), "scenario")

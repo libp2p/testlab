@@ -2,15 +2,18 @@ package scenario
 
 import (
 	"fmt"
+	"strings"
 
+	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/utils"
 )
 
-type ScenarioNode struct{}
+type ScenarioNode struct {
+	consulConfig *capi.Config
+}
 
 func (s *ScenarioNode) Task(options map[string]string) (*napi.Task, error) {
-	var ok bool
 	task := napi.NewTask("scenario", "exec")
 
 	res := napi.DefaultResources()
@@ -32,13 +35,21 @@ func (s *ScenarioNode) Task(options map[string]string) (*napi.Task, error) {
 	}
 	task.SetConfig("command", command)
 
-	var serviceName string
-	if serviceName, ok = options["TargetService"]; !ok {
+	if serviceName, ok := options["TargetService"]; ok {
+		task.Env["SERVICE_NAME"] = serviceName
+	} else {
 		return nil, fmt.Errorf(`scenarios require a "TargetService" option be set, found none`)
 	}
 
-	task.Env = map[string]string{
-		"SERVICE_NAME": serviceName,
+	if s.consulConfig != nil {
+		envStrs := s.consulConfig.GenerateEnv()
+		for _, envStr := range envStrs {
+			parts := strings.SplitN(envStr, "=", 2)
+			if len(parts) != 2 {
+				continue
+			}
+			task.Env[parts[0]] = parts[1]
+		}
 	}
 
 	return task, nil
