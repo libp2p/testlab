@@ -10,7 +10,7 @@ import (
 
 type P2pdNode struct{}
 
-func (n *P2pdNode) Task(options map[string]string) *napi.Task {
+func (n *P2pdNode) Task(options map[string]string) (*napi.Task, error) {
 	task := napi.NewTask("p2pd", "exec")
 	command := "/usr/local/bin/p2pd"
 	args := []string{
@@ -82,5 +82,5 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 	task.SetConfig("command", command)
 	task.SetConfig("args", args)
 
-	return task
+	return task, nil
 }
