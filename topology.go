@@ -10,7 +10,7 @@ import (
 type Deployment struct {
 	Name     string
 	Plugin   string
-	Options  map[string]string
+	Options  utils.NodeOptions
 	Quantity int
 }
 

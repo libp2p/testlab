@@ -6,6 +6,7 @@ import (
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/testlab/node/p2pd"
 	"github.com/libp2p/testlab/testlab/node/scenario"
+	"github.com/libp2p/testlab/utils"
 )
 
 var Plugins map[string]Node
@@ -29,5 +30,5 @@ func init() {
 // nomad tasks. For now, this is left as an interface so plugin implementors can
 // include instantiation logic.
 type Node interface {
-	Task(options map[string]string) (*napi.Task, error)
+	Task(options utils.NodeOptions) (*napi.Task, error)
 }

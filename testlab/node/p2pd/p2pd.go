@@ -10,7 +10,7 @@ import (
 
 type P2pdNode struct{}
 
-func (n *P2pdNode) Task(options map[string]string) (*napi.Task, error) {
+func (n *P2pdNode) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("p2pd", "exec")
 	command := "/usr/local/bin/p2pd"
 	args := []string{
@@ -37,11 +37,11 @@ func (n *P2pdNode) Task(options map[string]string) (*napi.Task, error) {
 
 	url := ""
 
-	if cid, ok := options["Cid"]; ok {
+	if cid, ok := options.String("Cid"); ok {
 		url = fmt.Sprintf("https://gateway.ipfs.io/ipfs/%s", cid)
 	}
 
-	if urlOpt, ok := options["Fetch"]; ok {
+	if urlOpt, ok := options.String("Fetch"); ok {
 		url = urlOpt
 	}
 
@@ -55,7 +55,7 @@ func (n *P2pdNode) Task(options map[string]string) (*napi.Task, error) {
 		command = "p2pd"
 	}
 
-	if service, ok := options["Service"]; ok {
+	if service, ok := options.String("Service"); ok {
 		if service == "p2pd" {
 			logrus.Error("p2pd already exports service \"p2pd\"")
 		} else {
