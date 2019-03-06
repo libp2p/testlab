@@ -21,10 +21,8 @@ type TestLab struct {
 // NewTestlab initiates a testlab, with a path to the current state of the
 // testlab as well as a configuration for contacting the nomad cluster. If nil,
 // nomadConfig will be populated with the defaults.
-func NewTestlab(path string, nomadConfig *napi.Config) (*TestLab, error) {
-	if nomadConfig == nil {
-		nomadConfig = napi.DefaultConfig()
-	}
+func NewTestlab(path string) (*TestLab, error) {
+	nomadConfig := napi.DefaultConfig()
 
 	client, err := napi.NewClient(nomadConfig)
 	if err != nil {

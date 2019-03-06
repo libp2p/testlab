@@ -1,0 +1,18 @@
+[Unit]
+Description=Consul
+Documentation=https://consul.io/docs/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+KillMode=process
+KillSignal=SIGINT
+ExecStart=/usr/local/bin/consul agent -dev -data-dir=/var/consul
+ExecReload=/usr/local/bin/consul reload
+Restart=on-failure
+RestartSec=2
+LimitNOFILE=65536
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target

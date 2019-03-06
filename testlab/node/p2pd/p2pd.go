@@ -10,7 +10,7 @@ import (
 
 type P2pdNode struct{}
 
-func (n *P2pdNode) Task(options map[string]string) *napi.Task {
+func (n *P2pdNode) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("p2pd", "exec")
 	command := "/usr/local/bin/p2pd"
 	args := []string{
@@ -35,8 +35,17 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 	}
 	task.Services = append(task.Services, p2pdSvc)
 
-	if cid, ok := options["Cid"]; ok {
-		url := fmt.Sprintf("https://gateway.ipfs.io/ipfs/%s", cid)
+	url := ""
+
+	if cid, ok := options.String("Cid"); ok {
+		url = fmt.Sprintf("https://gateway.ipfs.io/ipfs/%s", cid)
+	}
+
+	if urlOpt, ok := options.String("Fetch"); ok {
+		url = urlOpt
+	}
+
+	if url != "" {
 		task.Artifacts = []*napi.TaskArtifact{
 			&napi.TaskArtifact{
 				GetterSource: utils.StringPtr(url),
@@ -46,7 +55,7 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 		command = "p2pd"
 	}
 
-	if service, ok := options["Service"]; ok {
+	if service, ok := options.String("Service"); ok {
 		if service == "p2pd" {
 			logrus.Error("p2pd already exports service \"p2pd\"")
 		} else {
@@ -73,5 +82,5 @@ func (n *P2pdNode) Task(options map[string]string) *napi.Task {
 	task.SetConfig("command", command)
 	task.SetConfig("args", args)
 
-	return task
+	return task, nil
 }
