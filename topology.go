@@ -3,6 +3,7 @@ package testlab
 import (
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/testlab/node"
+	"github.com/libp2p/testlab/utils"
 )
 
 // Deployment is a pair of a Node and a Quantity of that node to schedule in the

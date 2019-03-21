@@ -8,9 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type P2pdNode struct{}
+type Node struct{}
 
-func (n *P2pdNode) Task(options utils.NodeOptions) (*napi.Task, error) {
+func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("p2pd", "exec")
 	command := "/usr/local/bin/p2pd"
 	args := []string{

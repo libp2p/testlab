@@ -11,11 +11,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ScenarioNode struct {
+type Node struct {
 	consulConfig *capi.Config
 }
 
-func (s *ScenarioNode) Task(options utils.NodeOptions) (*napi.Task, error) {
+func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("scenario", "exec")
 
 	res := napi.DefaultResources()
