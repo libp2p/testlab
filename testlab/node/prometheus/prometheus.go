@@ -66,9 +66,6 @@ func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
 	task.SetConfig("volumes", []string{
 		"local/prometheus.yml:/etc/prometheus/prometheus.yml",
 	})
-	// task.SetConfig("port_map", map[string]interface{}{
-	// 	"prometheus": 9090,
-	// })
 	task.SetConfig("port_map", []interface{}{
 		map[string]interface{}{"prometheus": 9090},
 	})
