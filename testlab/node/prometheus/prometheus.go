@@ -1,10 +1,8 @@
 package prometheus
 
 import (
-	"fmt"
 	"time"
 
-	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/utils"
 )
@@ -12,9 +10,7 @@ import (
 // Node is the struct that builds prometheus tasks.
 type Node struct{}
 
-func config() string {
-	cfg := capi.DefaultConfig()
-	var tpl = `---
+var config = `---
 global:
   scrape_interval:     5s
   evaluation_interval: 5s
@@ -23,8 +19,8 @@ scrape_configs:
   - job_name: 'testlab_metrics'
 
     consul_sd_configs:
-    - server: '%s'
-      datacenter: '%s'
+    - server: '{{ env "CONSUL_HTTP_ADDR" }}'
+      datacenter: '{{ or (env "CONSUL_DATACENTER") "" }}'
       services: ['metrics']
 
     relabel_configs:
@@ -34,12 +30,6 @@ scrape_configs:
 
     scrape_interval: 5s
 `
-	return fmt.Sprintf(
-		tpl,
-		cfg.Address,
-		cfg.Datacenter,
-	)
-}
 
 // Task creates a nomad task specification for our prometheus metrics collector
 func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
@@ -55,9 +45,9 @@ func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.Resources = res
 
-	cfg := config()
+	utils.AddConsulEnvToTask(task)
 	tpl := &napi.Template{
-		EmbeddedTmpl: &cfg,
+		EmbeddedTmpl: &config,
 		DestPath:     utils.StringPtr("local/prometheus.yml"),
 	}
 	task.Templates = append(task.Templates, tpl)
