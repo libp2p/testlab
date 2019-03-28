@@ -45,6 +45,7 @@ func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.Resources = res
 
+	task.Env = make(map[string]string)
 	utils.AddConsulEnvToTask(task)
 	tpl := &napi.Template{
 		EmbeddedTmpl: &config,
