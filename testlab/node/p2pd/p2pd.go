@@ -8,14 +8,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type P2pdNode struct{}
+type Node struct{}
 
-func (n *P2pdNode) Task(options utils.NodeOptions) (*napi.Task, error) {
+func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("p2pd", "exec")
 	command := "/usr/local/bin/p2pd"
 	args := []string{
 		"-listen", "/ip4/${NOMAD_IP_p2pd}/tcp/${NOMAD_PORT_p2pd}",
 		"-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}",
+		"-metricsAddr", ":${NOMAD_PORT_metrics}",
 	}
 
 	res := napi.DefaultResources()
@@ -24,6 +25,7 @@ func (n *P2pdNode) Task(options utils.NodeOptions) (*napi.Task, error) {
 			DynamicPorts: []napi.Port{
 				napi.Port{Label: "libp2p"},
 				napi.Port{Label: "p2pd"},
+				napi.Port{Label: "metrics"},
 			},
 		},
 	}
@@ -33,7 +35,11 @@ func (n *P2pdNode) Task(options utils.NodeOptions) (*napi.Task, error) {
 		Name:      "p2pd",
 		PortLabel: "p2pd",
 	}
-	task.Services = append(task.Services, p2pdSvc)
+	metricsSvc := &napi.Service{
+		Name:      "metrics",
+		PortLabel: "metrics",
+	}
+	task.Services = append(task.Services, p2pdSvc, metricsSvc)
 
 	url := ""
 

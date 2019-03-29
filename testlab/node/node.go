@@ -5,6 +5,7 @@ import (
 
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/testlab/node/p2pd"
+	"github.com/libp2p/testlab/testlab/node/prometheus"
 	"github.com/libp2p/testlab/testlab/node/scenario"
 	"github.com/libp2p/testlab/utils"
 )
@@ -21,8 +22,9 @@ func GetPlugin(name string) (Node, error) {
 
 func init() {
 	Plugins = map[string]Node{
-		"p2pd":     new(p2pd.P2pdNode),
-		"scenario": new(scenario.ScenarioNode),
+		"p2pd":       new(p2pd.Node),
+		"scenario":   new(scenario.Node),
+		"prometheus": new(prometheus.Node),
 	}
 }
 

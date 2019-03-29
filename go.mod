@@ -110,3 +110,5 @@ require (
 )
 
 replace github.com/hashicorp/nomad v0.8.7 => github.com/hashicorp/nomad v0.9.0-beta2
+
+replace github.com/libp2p/go-libp2p-daemon v0.0.1 => github.com/libp2p/go-libp2p-daemon v0.0.4
