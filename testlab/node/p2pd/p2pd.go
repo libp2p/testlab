@@ -16,7 +16,12 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	args := []string{
 		"-listen", "/ip4/${NOMAD_IP_p2pd}/tcp/${NOMAD_PORT_p2pd}",
 		"-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}",
-		"-metricsAddr", ":${NOMAD_PORT_metrics}",
+		"-metricsAddr", "${NOMAD_ADDR_metrics}",
+		"-pubsub",
+	}
+
+	if router, ok := options.String("PubsubRouter"); ok {
+		args = append(args, "-pubsubRouter", router)
 	}
 
 	res := napi.DefaultResources()
@@ -32,12 +37,14 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task.Require(res)
 
 	p2pdSvc := &napi.Service{
-		Name:      "p2pd",
-		PortLabel: "p2pd",
+		Name:        "p2pd",
+		PortLabel:   "p2pd",
+		AddressMode: "host",
 	}
 	metricsSvc := &napi.Service{
-		Name:      "metrics",
-		PortLabel: "metrics",
+		Name:        "metrics",
+		PortLabel:   "metrics",
+		AddressMode: "host",
 	}
 	task.Services = append(task.Services, p2pdSvc, metricsSvc)
 
@@ -66,8 +73,9 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 			logrus.Error("p2pd already exports service \"p2pd\"")
 		} else {
 			svc := &napi.Service{
-				Name:      service,
-				PortLabel: "libp2p",
+				Name:        service,
+				PortLabel:   "libp2p",
+				AddressMode: "host",
 			}
 			task.Services = append(task.Services, svc)
 		}
