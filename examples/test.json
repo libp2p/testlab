@@ -10,6 +10,7 @@
       "Plugin": "p2pd",
       "Quantity": 3,
       "Options": {
+        "Service": "gossippeers",
         "Bootstrap": "gateway"
       }
     },
@@ -25,6 +26,15 @@
       "Name": "prometheus",
       "Plugin": "prometheus",
       "Quantity": 1
+    },
+    {
+      "Name": "scenario",
+      "Plugin": "scenario",
+      "Quantity": 1,
+      "Options": {
+        "Command": "pubsub_scenario",
+        "TargetService": "gossippeers"
+      }
     }
   ]
 }

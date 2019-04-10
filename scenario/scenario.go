@@ -130,7 +130,7 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 			clientch <- client
 		}()
 	}
-	wg.Done()
+	wg.Wait()
 
 	// Should errors be fatal, or should we just log?
 	if err, ok := <-errch; ok {

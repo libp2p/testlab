@@ -37,6 +37,7 @@ func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.SetConfig("command", command)
 
+	task.Env = make(map[string]string)
 	if serviceName, ok := options.String("TargetService"); ok {
 		task.Env["SERVICE_NAME"] = serviceName
 	} else {
