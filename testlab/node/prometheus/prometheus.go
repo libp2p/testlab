@@ -43,6 +43,13 @@ func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
 			},
 		},
 	}
+	mem := 1000
+
+	if memOpt, ok := opts.Int("Memory"); ok {
+		mem = memOpt
+	}
+
+	res.MemoryMB = &mem
 	task.Resources = res
 
 	task.Env = make(map[string]string)
