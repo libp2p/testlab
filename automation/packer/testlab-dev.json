@@ -110,7 +110,6 @@
       "inline": [
         "mv /ops/config/consul.service /etc/systemd/system/consul.service",
         "mv /ops/config/nomad.service /etc/systemd/system/nomad.service",
-        "rmdir /ops/config",
         "mv /ops/testlab /usr/local/bin/"
       ]
     }

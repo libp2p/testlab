@@ -7,7 +7,7 @@ After=network-online.target
 [Service]
 KillMode=process
 KillSignal=SIGINT
-ExecStart=/usr/local/bin/consul agent -dev -data-dir=/var/consul
+ExecStart=/usr/local/bin/consul agent -config-file=/ops/config/consul.hcl
 ExecReload=/usr/local/bin/consul reload
 Restart=on-failure
 RestartSec=2
