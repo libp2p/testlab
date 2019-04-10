@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 
 	capi "github.com/hashicorp/consul/api"
@@ -30,6 +31,7 @@ type ScenarioRunner struct {
 	consul       *capi.Client
 	root         string
 	service      string
+	numClients   int
 }
 
 func NewScenarioRunner() (*ScenarioRunner, error) {
@@ -45,11 +47,21 @@ func NewScenarioRunner() (*ScenarioRunner, error) {
 	if !ok {
 		return nil, fmt.Errorf("SERVICE_NAME not present in environment")
 	}
+	var numClients int
+	if numClientsStr, ok := os.LookupEnv("DAEMON_CLIENTS"); ok {
+		numClients, err = strconv.Atoi(numClientsStr)
+		if err != nil {
+			return nil, fmt.Errorf("expected DAEMON_CLIENTS to be an integer, found: %s", numClientsStr)
+		}
+	} else {
+		return nil, fmt.Errorf("DAEMON_CLIENTS not present in environment")
+	}
 
 	runner := &ScenarioRunner{
 		consulConfig: consulConfig,
 		root:         root,
 		service:      service,
+		numClients:   numClients,
 	}
 
 	return runner, nil
@@ -114,10 +126,28 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 
 	wg.Add(len(addrs))
 	for i, addr := range addrs {
-		go func() {
+		if i > s.numClients {
+			wg.Done()
+			logrus.Warnf("skipping client creation for %s, already exceeded allocated ports", addr.String())
+			continue
+		}
+		go func(i int, addr ma.Multiaddr) {
 			defer wg.Done()
-			listenSock := fmt.Sprintf("/unix/%s/clients/%d.sock", s.root, i)
-			listenMaddr, err := ma.NewMultiaddr(listenSock)
+
+			clientHostVar := fmt.Sprintf("NOMAD_HOST_client%d", i)
+			clientPortVar := fmt.Sprintf("NOMAD_PORT_client%d", i)
+			clientHost, ok := os.LookupEnv(clientHostVar)
+			if !ok {
+				errch <- fmt.Errorf("%s was not found in environment", clientHostVar)
+				return
+			}
+			clientPort, ok := os.LookupEnv(clientPortVar)
+			if !ok {
+				errch <- fmt.Errorf("%s was not found in environment", clientPortVar)
+				return
+			}
+			listenAddr := fmt.Sprintf("/ip4/%s/tcp/%d", clientHost, clientPort)
+			listenMaddr, err := ma.NewMultiaddr(listenAddr)
 			if err != nil {
 				errch <- fmt.Errorf("creating control socket multiaddr: %s", err)
 				return
@@ -128,7 +158,7 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 				return
 			}
 			clientch <- client
-		}()
+		}(i, addr)
 	}
 	wg.Wait()
 

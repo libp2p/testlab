@@ -33,7 +33,8 @@
       "Quantity": 1,
       "Options": {
         "Command": "pubsub_scenario",
-        "TargetService": "gossippeers"
+        "TargetService": "gossippeers",
+        "Clients": 3
       }
     }
   ]

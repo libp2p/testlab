@@ -17,8 +17,24 @@ type Node struct {
 
 func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("scenario", "exec")
+	task.Env = make(map[string]string)
 
 	res := napi.DefaultResources()
+
+	if clients, ok := options.Int("Clients"); ok {
+		task.Env["DAEMON_CLIENTS"] = fmt.Sprint(clients)
+		dynamicPorts := make([]napi.Port, clients)
+		for i := 0; i < clients; i++ {
+			label := fmt.Sprintf("client%d", i)
+			dynamicPorts[i] = napi.Port{Label: label}
+		}
+		res.Networks = append(res.Networks, &napi.NetworkResource{
+			DynamicPorts: dynamicPorts,
+		})
+	} else {
+		logrus.Fatal("missing required configuration option, Clients, in scenario")
+	}
+
 	task.Require(res)
 
 	var command string
@@ -37,7 +53,6 @@ func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.SetConfig("command", command)
 
-	task.Env = make(map[string]string)
 	if serviceName, ok := options.String("TargetService"); ok {
 		task.Env["SERVICE_NAME"] = serviceName
 	} else {
