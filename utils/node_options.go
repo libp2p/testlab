@@ -28,7 +28,17 @@ func (opts NodeOptions) Int(key string) (int, bool) {
 		return 0, ok
 	}
 
-	optInt, ok := opt.(int)
+	optInt, ok := opt.(float64)
+	return (int)(optInt), ok
+}
+
+func (opts NodeOptions) Float(key string) (float64, bool) {
+	opt, ok := opts[key]
+	if !ok {
+		return 0, ok
+	}
+
+	optInt, ok := opt.(float64)
 	return optInt, ok
 }
 
