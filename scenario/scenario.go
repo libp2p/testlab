@@ -95,7 +95,7 @@ func (s *ScenarioRunner) PeerControlAddrs() ([]ma.Multiaddr, error) {
 
 	maddrs := make([]ma.Multiaddr, len(svcs))
 	for i, svc := range svcs {
-		addr := fmt.Sprintf("/ip4/%s/tcp/%s", svc.ServiceAddress, svc.ServicePort)
+		addr := fmt.Sprintf("/ip4/%s/tcp/%d", svc.ServiceAddress, svc.ServicePort)
 		maddr, err := ma.NewMultiaddr(addr)
 		if err != nil {
 			return nil, err
@@ -118,10 +118,8 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 		return nil, err
 	}
 
-	clientch := make(chan *p2pclient.Client)
-	defer close(clientch)
-	errch := make(chan error)
-	defer close(errch)
+	clientch := make(chan *p2pclient.Client, 10)
+	errch := make(chan error, 10)
 	var wg sync.WaitGroup
 
 	wg.Add(len(addrs))
@@ -131,10 +129,10 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 			logrus.Warnf("skipping client creation for %s, already exceeded allocated ports", addr.String())
 			continue
 		}
-		go func(i int, addr ma.Multiaddr) {
+		go func(i int, addr ma.Multiaddr, wg *sync.WaitGroup) {
 			defer wg.Done()
 
-			clientHostVar := fmt.Sprintf("NOMAD_HOST_client%d", i)
+			clientHostVar := fmt.Sprintf("NOMAD_IP_client%d", i)
 			clientPortVar := fmt.Sprintf("NOMAD_PORT_client%d", i)
 			clientHost, ok := os.LookupEnv(clientHostVar)
 			if !ok {
@@ -146,7 +144,7 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 				errch <- fmt.Errorf("%s was not found in environment", clientPortVar)
 				return
 			}
-			listenAddr := fmt.Sprintf("/ip4/%s/tcp/%d", clientHost, clientPort)
+			listenAddr := fmt.Sprintf("/ip4/%s/tcp/%s", clientHost, clientPort)
 			listenMaddr, err := ma.NewMultiaddr(listenAddr)
 			if err != nil {
 				errch <- fmt.Errorf("creating control socket multiaddr: %s", err)
@@ -158,9 +156,11 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 				return
 			}
 			clientch <- client
-		}(i, addr)
+		}(i, addr, &wg)
 	}
 	wg.Wait()
+	close(clientch)
+	close(errch)
 
 	// Should errors be fatal, or should we just log?
 	if err, ok := <-errch; ok {

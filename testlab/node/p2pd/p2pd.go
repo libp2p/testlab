@@ -17,7 +17,7 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 		"-listen", "/ip4/${NOMAD_IP_p2pd}/tcp/${NOMAD_PORT_p2pd}",
 		"-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}",
 		"-metricsAddr", "${NOMAD_ADDR_metrics}",
-		"-pubsub",
+		"-pubsub", "-b",
 	}
 
 	if router, ok := options.String("PubsubRouter"); ok {
@@ -68,13 +68,14 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 		command = "p2pd"
 	}
 
+	// TODO: there should be a way to expose the libp2p service as well
 	if service, ok := options.String("Service"); ok {
 		if service == "p2pd" {
 			logrus.Error("p2pd already exports service \"p2pd\"")
 		} else {
 			svc := &napi.Service{
 				Name:        service,
-				PortLabel:   "libp2p",
+				PortLabel:   "p2pd",
 				AddressMode: "host",
 			}
 			task.Services = append(task.Services, svc)

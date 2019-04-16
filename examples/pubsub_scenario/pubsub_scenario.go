@@ -15,10 +15,19 @@ const topic = "load-test"
 func subscribeReceivers(clients []*p2pclient.Client) {
 	for _, client := range clients {
 		client.Subscribe(context.Background(), topic)
+		id, _, err := client.Identify()
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		logrus.Infof("subscribed client %s", id.Pretty())
 	}
 }
 
 func main() {
+	logrus.SetLevel(logrus.InfoLevel)
+	logrus.Info("Waiting 30s...")
+	time.Sleep(time.Second * 30)
+	logrus.Info("Starting")
 	runner, err := scenario.NewScenarioRunner()
 	if err != nil {
 		logrus.Fatal(err)
@@ -39,6 +48,7 @@ func main() {
 
 	for {
 		wait := rand.Int63n(5000)
+		logrus.Infof("Sending a message in %dms", wait)
 		time.Sleep(time.Duration(wait) * time.Millisecond)
 		data := make([]byte, rand.Intn(450)+50)
 		rand.Read(data)
