@@ -1,6 +1,7 @@
 package scenario
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/libp2p/go-libp2p-daemon/p2pclient"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 )
 
 // Scenarios are run in an environment with the following information:
@@ -121,6 +123,7 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 	clientch := make(chan *p2pclient.Client, 10)
 	errch := make(chan error, 10)
 	var wg sync.WaitGroup
+	sem := semaphore.NewWeighted(5)
 
 	wg.Add(len(addrs))
 	for i, addr := range addrs {
@@ -130,6 +133,8 @@ func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
 			continue
 		}
 		go func(i int, addr ma.Multiaddr, wg *sync.WaitGroup) {
+			sem.Acquire(context.Background(), 1)
+			defer sem.Release(1)
 			defer wg.Done()
 
 			clientHostVar := fmt.Sprintf("NOMAD_IP_client%d", i)
