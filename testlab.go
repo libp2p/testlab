@@ -94,7 +94,6 @@ func (t *TestLab) WaitEval(evalID string) error {
 			return err
 		}
 		if info.Status != "complete" {
-			logrus.Infof("waiting for evaluation to complete, status: %s", info.Status)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -132,27 +131,31 @@ func (t *TestLab) Start(topology *Topology) error {
 	if err != nil {
 		return err
 	}
-	deploymentFile, err := os.OpenFile(t.deploymentPath, os.O_CREATE, 0755)
+	deploymentFile, err := os.OpenFile(t.deploymentPath, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		return err
 	}
 	defer deploymentFile.Close()
 	for i, job := range jobs {
+		logrus.Infof("scheduling phase %d...", i)
 		resp, _, err := t.nomad.Jobs().Register(job, nil)
 		if err == nil {
 			logrus.Infof("rendering topology in evaluation id %s took %s", resp.EvalID, resp.RequestTime.String())
 			deploymentFile.WriteString(fmt.Sprintf("%s\n", *job.ID))
+			deploymentFile.Sync()
 		} else {
 			return err
 		}
-		if i < len(jobs)-1 {
-			if err = t.WaitEval(resp.EvalID); err != nil {
+		if err = t.WaitEval(resp.EvalID); err != nil {
+			return err
+		}
+		logrus.Infof("phase %d scheduled, running post deploy hooks...", i)
+		for _, postDeployFunc := range postDeployFuncs[i] {
+			if err := postDeployFunc(t.consul); err != nil {
 				return err
 			}
 		}
-		for _, postDeployFunc := range postDeployFuncs[i] {
-			postDeployFunc(t.consul)
-		}
+		logrus.Infof("phase %d complete", i)
 	}
-	return err
+	return nil
 }

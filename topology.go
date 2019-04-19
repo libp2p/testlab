@@ -23,17 +23,17 @@ func (d *Deployment) TaskGroup() (*napi.TaskGroup, node.PostDeployFunc, error) {
 	group := napi.NewTaskGroup(d.Name, d.Quantity)
 	group.Count = &d.Quantity
 
-	node, err := node.GetPlugin(d.Plugin)
+	plugin, err := node.GetPlugin(d.Plugin)
 	if err != nil {
 		return nil, nil, err
 	}
-	task, err := node.Task(d.Options)
+	task, err := plugin.Task(d.Options)
 	if err != nil {
 		return nil, nil, err
 	}
 	group.AddTask(task)
 	postDeploy := func(c *capi.Client) error {
-		return node.PostDeploy(c, d.Options)
+		return plugin.PostDeploy(c, d.Options)
 	}
 	return group, postDeploy, nil
 }

@@ -12,7 +12,8 @@
       "Options": {
         "Service": "gossippeers",
         "Bootstrap": "gateway"
-      }
+      },
+      "Dependencies": ["gateways"]
     },
     {
       "Name": "gateways",
@@ -35,7 +36,8 @@
         "Command": "pubsub_scenario",
         "TargetService": "gossippeers",
         "Clients": 3
-      }
+      },
+      "Dependencies": ["peers", "gateways"]
     }
   ]
 }

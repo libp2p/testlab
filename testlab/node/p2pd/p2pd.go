@@ -2,6 +2,10 @@ package p2pd
 
 import (
 	"fmt"
+	"path/filepath"
+
+	"io/ioutil"
+	"os"
 
 	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
@@ -86,7 +90,7 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 
 	if bootstrap, ok := options["Bootstrap"]; ok {
-		tmpl := `BOOTSTRAP_PEERS={{range $index, $service := service "%s"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}/p2p/{{printf "/peerids/%s" $service.ID | key}}{{end}}`
+		tmpl := `BOOTSTRAP_PEERS={{range $index, $service := service "%s"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}/p2p/{{printf "/peerids/%%s" $service.ID | key}}{{end}}`
 		tmpl = fmt.Sprintf(tmpl, bootstrap)
 		env := true
 		template := &napi.Template{
@@ -105,12 +109,13 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 }
 
 func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
-	bootstrap, ok := options.String("Bootstrap")
+	service, ok := options.String("Service")
 	if !ok {
+		logrus.Info("skipping post deploy for p2pd, no Service option")
 		return nil
 	}
 
-	svcs, _, err := consul.Catalog().Service(bootstrap, "", nil)
+	svcs, _, err := consul.Catalog().Service(service, "", nil)
 	if err != nil {
 		return err
 	}
@@ -123,13 +128,21 @@ func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 		}
 		bootstrapControlAddrs[svc.ServiceID] = addr
 	}
-	listenAddr, _ := ma.NewMultiaddr("/unix/ignore")
 	for svcID, addr := range bootstrapControlAddrs {
+		dir, err := ioutil.TempDir(os.TempDir(), "daemon_client")
+		if err != nil {
+			return err
+		}
+		sockPath := filepath.Join("/unix", dir, "ignore.sock")
+		listenAddr, _ := ma.NewMultiaddr(sockPath)
 		client, err := p2pclient.NewClient(addr, listenAddr)
 		if err != nil {
 			return err
 		}
-		defer client.Close()
+		defer func() {
+			client.Close()
+			os.RemoveAll(dir)
+		}()
 		peerID, _, err := client.Identify()
 		if err != nil {
 			return err
