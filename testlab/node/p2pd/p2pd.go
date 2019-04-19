@@ -3,8 +3,11 @@ package p2pd
 import (
 	"fmt"
 
+	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
+	"github.com/libp2p/go-libp2p-daemon/p2pclient"
 	"github.com/libp2p/testlab/utils"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 )
 
@@ -83,7 +86,8 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 
 	if bootstrap, ok := options["Bootstrap"]; ok {
-		tmpl := fmt.Sprintf("BOOTSTRAP_PEERS={{range $index, $service := service \"%s\"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}{{end}}", bootstrap)
+		tmpl := `BOOTSTRAP_PEERS={{range $index, $service := service "%s"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}/p2p/{{printf "/peerids/%s" $service.ID | key}}{{end}}`
+		tmpl = fmt.Sprintf(tmpl, bootstrap)
 		env := true
 		template := &napi.Template{
 			EmbeddedTmpl: &tmpl,
@@ -98,4 +102,45 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task.SetConfig("args", args)
 
 	return task, nil
+}
+
+func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
+	bootstrap, ok := options.String("Bootstrap")
+	if !ok {
+		return nil
+	}
+
+	svcs, _, err := consul.Catalog().Service(bootstrap, "", nil)
+	if err != nil {
+		return err
+	}
+	bootstrapControlAddrs := make(map[string]ma.Multiaddr)
+	for _, svc := range svcs {
+		addrStr := fmt.Sprintf("/ip4/%s/tcp/%d", svc.ServiceAddress, svc.ServicePort)
+		addr, err := ma.NewMultiaddr(addrStr)
+		if err != nil {
+			return err
+		}
+		bootstrapControlAddrs[svc.ServiceID] = addr
+	}
+	listenAddr, _ := ma.NewMultiaddr("/unix/ignore")
+	for svcID, addr := range bootstrapControlAddrs {
+		client, err := p2pclient.NewClient(addr, listenAddr)
+		if err != nil {
+			return err
+		}
+		peerID, _, err := client.Identify()
+		if err != nil {
+			return err
+		}
+		kv := &capi.KVPair{
+			Key:   fmt.Sprintf("peerids/%s", svcID),
+			Value: []byte(peerID.Pretty()),
+		}
+		_, err = consul.KV().Put(kv, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

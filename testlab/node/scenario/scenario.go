@@ -15,11 +15,19 @@ type Node struct {
 	consulConfig *capi.Config
 }
 
+func (s *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
+	return nil
+}
+
 func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("scenario", "exec")
 	task.Env = make(map[string]string)
 
 	res := napi.DefaultResources()
+	memory := 500
+	res.MemoryMB = &memory
+	cpu := 500
+	res.CPU = &cpu
 
 	if clients, ok := options.Int("Clients"); ok {
 		task.Env["DAEMON_CLIENTS"] = fmt.Sprint(clients)

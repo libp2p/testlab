@@ -3,6 +3,7 @@ package prometheus
 import (
 	"time"
 
+	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/utils"
 )
@@ -30,6 +31,10 @@ scrape_configs:
 
     scrape_interval: 5s
 `
+
+func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
+	return nil
+}
 
 // Task creates a nomad task specification for our prometheus metrics collector
 func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strconv"
 	"sync"
 
 	capi "github.com/hashicorp/consul/api"
 	"github.com/libp2p/go-libp2p-daemon/p2pclient"
+	"github.com/libp2p/testlab/utils"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
@@ -90,31 +90,10 @@ func (s *ScenarioRunner) PeerControlAddrs() ([]ma.Multiaddr, error) {
 		return nil, err
 	}
 
-	svcs, _, err := client.Catalog().Service(s.service, "", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	maddrs := make([]ma.Multiaddr, len(svcs))
-	for i, svc := range svcs {
-		addr := fmt.Sprintf("/ip4/%s/tcp/%d", svc.ServiceAddress, svc.ServicePort)
-		maddr, err := ma.NewMultiaddr(addr)
-		if err != nil {
-			return nil, err
-		}
-		maddrs[i] = maddr
-	}
-
-	return maddrs, nil
+	return utils.PeerControlAddrs(client, s.service)
 }
 
 func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {
-	path := filepath.Join(s.root, "clients")
-	err := os.MkdirAll(path, 0777)
-	if err != nil {
-		return nil, fmt.Errorf("making clients directory: %s", err)
-	}
-
 	addrs, err := s.PeerControlAddrs()
 	if err != nil {
 		return nil, err

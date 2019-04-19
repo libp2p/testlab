@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 
 	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // StringPtr stack allocates a string literal and returns a reference to it
@@ -39,4 +41,23 @@ func AddConsulEnvToTask(t *napi.Task) {
 			t.Env[envVar] = envVal
 		}
 	}
+}
+
+func PeerControlAddrs(consul *capi.Client, service string) ([]ma.Multiaddr, error) {
+	svcs, _, err := consul.Catalog().Service(service, "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	maddrs := make([]ma.Multiaddr, len(svcs))
+	for i, svc := range svcs {
+		addr := fmt.Sprintf("/ip4/%s/tcp/%d", svc.ServiceAddress, svc.ServicePort)
+		maddr, err := ma.NewMultiaddr(addr)
+		if err != nil {
+			return nil, err
+		}
+		maddrs[i] = maddr
+	}
+
+	return maddrs, nil
 }
