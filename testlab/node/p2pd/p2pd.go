@@ -129,6 +129,7 @@ func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 		if err != nil {
 			return err
 		}
+		defer client.Close()
 		peerID, _, err := client.Identify()
 		if err != nil {
 			return err
