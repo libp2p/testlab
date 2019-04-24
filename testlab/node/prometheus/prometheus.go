@@ -24,11 +24,6 @@ scrape_configs:
       datacenter: '{{ or (env "CONSUL_DATACENTER") "" }}'
       services: ['metrics']
 
-    relabel_configs:
-    - source_labels: ['__meta_consul_tags']
-      regex: '(.*)http(.*)'
-      action: keep
-
     scrape_interval: 5s
 `
 
