@@ -51,3 +51,31 @@ func (opts NodeOptions) Object(key string) (NodeOptions, bool) {
 	obj, ok := opt.(NodeOptions)
 	return obj, ok
 }
+
+func (opts NodeOptions) Slice(key string) ([]interface{}, bool) {
+	opt, ok := opts[key]
+	if !ok {
+		return nil, ok
+	}
+
+	obj, ok := opt.([]interface{})
+	return obj, ok
+}
+
+func (opts NodeOptions) StringSlice(key string) ([]string, bool) {
+	slice, ok := opts.Slice(key)
+	if !ok {
+		return nil, ok
+	}
+
+	stringSlice := make([]string, len(slice))
+	for i, item := range slice {
+		str, ok := item.(string)
+		if !ok {
+			return nil, ok
+		}
+		stringSlice[i] = str
+	}
+
+	return stringSlice, true
+}

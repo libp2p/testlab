@@ -10,7 +10,7 @@
       "Plugin": "p2pd",
       "Quantity": 3,
       "Options": {
-        "Service": "gossippeers",
+        "Tags": ["gossippeers"],
         "Bootstrap": "gateway"
       },
       "Dependencies": ["gateways"]
@@ -20,7 +20,7 @@
       "Plugin": "p2pd",
       "Quantity": 1,
       "Options": {
-        "Service": "gateway"
+        "Tags": ["gateway"]
       }
     },
     {
@@ -34,7 +34,7 @@
       "Quantity": 1,
       "Options": {
         "Command": "pubsub_scenario",
-        "TargetService": "gossippeers",
+        "TargetTag": "gossippeers",
         "Clients": 3
       },
       "Dependencies": ["peers", "gateways"]

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p-daemon/p2pclient"
+	p2pd_pb "github.com/libp2p/go-libp2p-daemon/pb"
 	"github.com/libp2p/testlab/scenario"
 	"github.com/sirupsen/logrus"
 )
@@ -14,7 +15,15 @@ const topic = "load-test"
 
 func subscribeReceivers(clients []*p2pclient.Client) {
 	for _, client := range clients {
-		client.Subscribe(context.Background(), topic)
+		msgs, err := client.Subscribe(context.Background(), topic)
+		if err != nil {
+			logrus.Errorf("error subscribing: %s", err)
+		}
+		go func(msgs <-chan *p2pd_pb.PSMessage) {
+			for msg := range msgs {
+				logrus.Infof("got message on topic: %s", msg.TopicIDs[0])
+			}
+		}(msgs)
 		id, _, err := client.Identify()
 		if err != nil {
 			logrus.Fatal(err)

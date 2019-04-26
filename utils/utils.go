@@ -43,8 +43,8 @@ func AddConsulEnvToTask(t *napi.Task) {
 	}
 }
 
-func PeerControlAddrs(consul *capi.Client, service string) ([]ma.Multiaddr, error) {
-	svcs, _, err := consul.Catalog().Service(service, "", nil)
+func PeerControlAddrs(consul *capi.Client, service, tag string) ([]ma.Multiaddr, error) {
+	svcs, _, err := consul.Catalog().Service(service, tag, nil)
 	if err != nil {
 		return nil, err
 	}

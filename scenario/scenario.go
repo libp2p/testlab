@@ -32,7 +32,7 @@ type ScenarioRunner struct {
 	consulConfig *capi.Config
 	consul       *capi.Client
 	root         string
-	service      string
+	tag          string
 	numClients   int
 }
 
@@ -43,11 +43,11 @@ func NewScenarioRunner() (*ScenarioRunner, error) {
 	if err != nil {
 		return nil, err
 	}
-	var service string
+	var tag string
 	var ok bool
-	service, ok = os.LookupEnv("SERVICE_NAME")
+	tag, ok = os.LookupEnv("SERVICE_TAG")
 	if !ok {
-		return nil, fmt.Errorf("SERVICE_NAME not present in environment")
+		return nil, fmt.Errorf("SERVICE_TAG not present in environment")
 	}
 	var numClients int
 	if numClientsStr, ok := os.LookupEnv("DAEMON_CLIENTS"); ok {
@@ -62,7 +62,7 @@ func NewScenarioRunner() (*ScenarioRunner, error) {
 	runner := &ScenarioRunner{
 		consulConfig: consulConfig,
 		root:         root,
-		service:      service,
+		tag:          tag,
 		numClients:   numClients,
 	}
 
@@ -90,7 +90,7 @@ func (s *ScenarioRunner) PeerControlAddrs() ([]ma.Multiaddr, error) {
 		return nil, err
 	}
 
-	return utils.PeerControlAddrs(client, s.service)
+	return utils.PeerControlAddrs(client, "p2pd", s.tag)
 }
 
 func (s *ScenarioRunner) Peers() ([]*p2pclient.Client, error) {

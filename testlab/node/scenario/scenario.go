@@ -61,10 +61,10 @@ func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.SetConfig("command", command)
 
-	if serviceName, ok := options.String("TargetService"); ok {
-		task.Env["SERVICE_NAME"] = serviceName
+	if tag, ok := options.String("TargetTag"); ok {
+		task.Env["SERVICE_TAG"] = tag
 	} else {
-		return nil, fmt.Errorf(`scenarios require a "TargetService" option be set, found none`)
+		return nil, fmt.Errorf(`scenarios require a "TargetTag" option be set, found none`)
 	}
 
 	if env, ok := options.Object("Env"); ok {
