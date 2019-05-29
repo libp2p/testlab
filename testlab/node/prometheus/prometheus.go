@@ -3,6 +3,7 @@ package prometheus
 import (
 	"time"
 
+	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/utils"
 )
@@ -23,13 +24,12 @@ scrape_configs:
       datacenter: '{{ or (env "CONSUL_DATACENTER") "" }}'
       services: ['metrics']
 
-    relabel_configs:
-    - source_labels: ['__meta_consul_tags']
-      regex: '(.*)http(.*)'
-      action: keep
-
     scrape_interval: 5s
 `
+
+func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
+	return nil
+}
 
 // Task creates a nomad task specification for our prometheus metrics collector
 func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
@@ -43,6 +43,13 @@ func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
 			},
 		},
 	}
+	mem := 1000
+
+	if memOpt, ok := opts.Int("Memory"); ok {
+		mem = memOpt
+	}
+
+	res.MemoryMB = &mem
 	task.Resources = res
 
 	task.Env = make(map[string]string)

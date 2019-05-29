@@ -7,7 +7,7 @@ if [[ "$?" -ne "0" ]]; then
   exit 1
 fi
 
-curl -o $CONSUL_ZIP https://releases.hashicorp.com/consul/1.4.2/consul_1.4.2_linux_amd64.zip
+curl -o $CONSUL_ZIP https://releases.hashicorp.com/consul/1.4.4/consul_1.4.4_linux_amd64.zip
 
 if [[ "$?" -ne "0" || ! -e $CONSUL_ZIP ]]; then
   echo "failed to download nomad";

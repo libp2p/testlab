@@ -21,9 +21,7 @@ Check out the [ROADMAP](ROADMAP.md) to see what's coming.
 
 ## Installation / Usage
 
-_Since this is a work in progress, the build process is not fully finalized.
-Once we have determined a satisfactory manner of managing plugins, build scripts
-will be included. Similarly, the usage patterns are being refined. Stay tuned!_
+
 
 ## Contribute
 

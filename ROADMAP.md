@@ -1,20 +1,27 @@
 # Testlab Roadmap
 
+A rough checklist of what's to come for the testlab.
+
+## Alpha Milestones
+
 - Automation
   - [ ] Packer for images
+    - [x] Local development
+    - [ ] Cluster
   - [ ] Release default packer images on IPFS
   - [ ] Terraform for cluster provisioning
 - Metrics collections
-  - [ ] Implement a wrapper for prometheus metrics collector that leverages
+  - [x] Implement a wrapper for prometheus metrics collector that leverages
         consul to discover endpoints to scrape.
-  - [ ] Implement a plugin for prometheus metrics collector
+  - [x] Implement a plugin for prometheus metrics collector
 - Scenario design
-  - [ ] Finalize scenario execution environment spec
-  - [ ] Implement basic golang library that makes it easy to operate within this
+  - [ ] Finalize scenario execution environment spec (IN PROGRESS)
+  - [x] Implement basic golang library that makes it easy to operate within this
         environment (e.g. automatically parses environment, makes it easy to
         create daemon clients)
-  - [ ] Implement example test scenario
+  - [x] Implement example test scenario
+  - [ ] Test in clustered environment
 - Target Plugins
-  - [ ] Make existing p2pd plugin compatible with js implementation (this will
-        likely require basic provisioning capabilities e.g. `npm install`)
-  - [ ] IPFS plugin
+  - [x] Make existing p2pd plugin compatible with js implementation
+  - [ ] Enable rudimentary provisioning for p2pd plugin (`npm install`, etc)
+  - [x] IPFS plugin

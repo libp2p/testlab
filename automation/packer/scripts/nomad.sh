@@ -7,7 +7,7 @@ if [[ "$?" -ne "0" ]]; then
   exit 1
 fi
 
-curl -o $NOMAD_ZIP https://releases.hashicorp.com/nomad/0.8.7/nomad_0.8.7_linux_amd64.zip;
+curl -o $NOMAD_ZIP https://releases.hashicorp.com/nomad/0.9.0/nomad_0.9.0_linux_amd64.zip;
 
 if [[ "$?" -ne "0" || ! -e $NOMAD_ZIP ]]; then
   echo "failed to download nomad";
@@ -16,7 +16,6 @@ fi
 
 cd /usr/local/bin &&
   unzip $NOMAD_ZIP
-
 
 if [[ "$?" -ne "0" ]]; then
   echo "failed to extract nomad";

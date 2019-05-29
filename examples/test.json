@@ -1,30 +1,43 @@
 {
+  "Name": "p2ptest",
   "Options": {
     "Datacenters": ["dc1"],
     "Priority": 1
   },
-  "Name": "p2ptest",
   "Deployments": [
     {
       "Name": "peers",
       "Plugin": "p2pd",
       "Quantity": 3,
       "Options": {
+        "Tags": ["gossippeers"],
         "Bootstrap": "gateway"
-      }
+      },
+      "Dependencies": ["gateways"]
     },
     {
       "Name": "gateways",
       "Plugin": "p2pd",
       "Quantity": 1,
       "Options": {
-        "Service": "gateway"
+        "Tags": ["gateway"]
       }
     },
     {
       "Name": "prometheus",
       "Plugin": "prometheus",
       "Quantity": 1
+    },
+    {
+      "Name": "scenario",
+      "Plugin": "scenario",
+      "Quantity": 1,
+      "Options": {
+        "Command": "pubsub_scenario",
+        "TargetTag": "gossippeers",
+        "Clients": 3
+      },
+      "Dependencies": ["peers", "gateways"]
     }
   ]
 }

@@ -2,9 +2,16 @@ package p2pd
 
 import (
 	"fmt"
+	"path/filepath"
 
+	"io/ioutil"
+	"os"
+
+	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
+	"github.com/libp2p/go-libp2p-daemon/p2pclient"
 	"github.com/libp2p/testlab/utils"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,7 +23,12 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	args := []string{
 		"-listen", "/ip4/${NOMAD_IP_p2pd}/tcp/${NOMAD_PORT_p2pd}",
 		"-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}",
-		"-metricsAddr", ":${NOMAD_PORT_metrics}",
+		"-metricsAddr", "${NOMAD_ADDR_metrics}",
+		"-pubsub",
+	}
+
+	if router, ok := options.String("PubsubRouter"); ok {
+		args = append(args, "-pubsubRouter", router)
 	}
 
 	res := napi.DefaultResources()
@@ -31,15 +43,22 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.Require(res)
 
-	p2pdSvc := &napi.Service{
-		Name:      "p2pd",
-		PortLabel: "p2pd",
-	}
 	metricsSvc := &napi.Service{
-		Name:      "metrics",
-		PortLabel: "metrics",
+		Name:        "metrics",
+		PortLabel:   "metrics",
+		AddressMode: "host",
 	}
-	task.Services = append(task.Services, p2pdSvc, metricsSvc)
+	p2pdSvc := &napi.Service{
+		Name:        "p2pd",
+		PortLabel:   "p2pd",
+		AddressMode: "host",
+	}
+	libp2pSvc := &napi.Service{
+		Name:        "libp2p",
+		PortLabel:   "libp2p",
+		AddressMode: "host",
+	}
+	task.Services = append(task.Services, metricsSvc, p2pdSvc, libp2pSvc)
 
 	url := ""
 
@@ -61,20 +80,15 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 		command = "p2pd"
 	}
 
-	if service, ok := options.String("Service"); ok {
-		if service == "p2pd" {
-			logrus.Error("p2pd already exports service \"p2pd\"")
-		} else {
-			svc := &napi.Service{
-				Name:      service,
-				PortLabel: "libp2p",
-			}
-			task.Services = append(task.Services, svc)
+	if tags, ok := options.StringSlice("Tags"); ok {
+		for _, service := range task.Services {
+			service.Tags = tags
 		}
 	}
 
 	if bootstrap, ok := options["Bootstrap"]; ok {
-		tmpl := fmt.Sprintf("BOOTSTRAP_PEERS={{range $index, $service := service \"%s\"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}{{end}}", bootstrap)
+		tmpl := `BOOTSTRAP_PEERS={{range $index, $service := service "%s.libp2p"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}/p2p/{{printf "/peerids/ip4/%%s/tcp/%%d" $service.Address $service.Port | key}}{{end}}`
+		tmpl = fmt.Sprintf(tmpl, bootstrap)
 		env := true
 		template := &napi.Template{
 			EmbeddedTmpl: &tmpl,
@@ -82,11 +96,64 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 			Envvars:      &env,
 		}
 		task.Templates = append(task.Templates, template)
-		args = append(args, "-bootstrapPeers", "${BOOTSTRAP_PEERS}")
+		args = append(args, "-b", "-bootstrapPeers", "${BOOTSTRAP_PEERS}")
 	}
 
 	task.SetConfig("command", command)
 	task.SetConfig("args", args)
 
 	return task, nil
+}
+
+func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
+	tags, ok := options.StringSlice("Tags")
+	if !ok {
+		logrus.Info("skipping post deploy for p2pd, no Tags option")
+		return nil
+	}
+
+	svcs, _, err := consul.Catalog().ServiceMultipleTags("p2pd", tags, nil)
+	if err != nil {
+		return err
+	}
+	bootstrapControlAddrs := make([]ma.Multiaddr, len(svcs))
+	for i, svc := range svcs {
+		addrStr := fmt.Sprintf("/ip4/%s/tcp/%d", svc.ServiceAddress, svc.ServicePort)
+		addr, err := ma.NewMultiaddr(addrStr)
+		if err != nil {
+			return err
+		}
+		bootstrapControlAddrs[i] = addr
+	}
+	for _, addr := range bootstrapControlAddrs {
+		dir, err := ioutil.TempDir(os.TempDir(), "daemon_client")
+		if err != nil {
+			return err
+		}
+		sockPath := filepath.Join("/unix", dir, "ignore.sock")
+		listenAddr, _ := ma.NewMultiaddr(sockPath)
+		client, err := p2pclient.NewClient(addr, listenAddr)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			client.Close()
+			os.RemoveAll(dir)
+		}()
+		peerID, addrs, err := client.Identify()
+		if err != nil {
+			return err
+		}
+		for _, addr := range addrs {
+			kv := &capi.KVPair{
+				Key:   fmt.Sprintf("peerids%s", addr.String()),
+				Value: []byte(peerID.Pretty()),
+			}
+			_, err = consul.KV().Put(kv, nil)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

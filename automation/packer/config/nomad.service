@@ -12,7 +12,7 @@ After=consul.service
 [Service]
 KillMode=process
 KillSignal=SIGINT
-ExecStart=/usr/local/bin/nomad agent -dev -data-dir=/var/nomad
+ExecStart=/usr/local/bin/nomad agent -config-file=/ops/config/nomad.hcl
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=2

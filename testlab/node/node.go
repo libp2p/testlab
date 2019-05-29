@@ -3,6 +3,7 @@ package node
 import (
 	"fmt"
 
+	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
 	"github.com/libp2p/testlab/testlab/node/p2pd"
 	"github.com/libp2p/testlab/testlab/node/prometheus"
@@ -28,9 +29,12 @@ func init() {
 	}
 }
 
+type PostDeployFunc func(*capi.Client) error
+
 // Node is an incredibly simple interface describing plugins that will generate
 // nomad tasks. For now, this is left as an interface so plugin implementors can
 // include instantiation logic.
 type Node interface {
-	Task(options utils.NodeOptions) (*napi.Task, error)
+	Task(utils.NodeOptions) (*napi.Task, error)
+	PostDeploy(*capi.Client, utils.NodeOptions) error
 }

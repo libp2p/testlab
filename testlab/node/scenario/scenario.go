@@ -15,10 +15,34 @@ type Node struct {
 	consulConfig *capi.Config
 }
 
+func (s *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
+	return nil
+}
+
 func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("scenario", "exec")
+	task.Env = make(map[string]string)
 
 	res := napi.DefaultResources()
+	memory := 500
+	res.MemoryMB = &memory
+	cpu := 500
+	res.CPU = &cpu
+
+	if clients, ok := options.Int("Clients"); ok {
+		task.Env["DAEMON_CLIENTS"] = fmt.Sprint(clients)
+		dynamicPorts := make([]napi.Port, clients)
+		for i := 0; i < clients; i++ {
+			label := fmt.Sprintf("client%d", i)
+			dynamicPorts[i] = napi.Port{Label: label}
+		}
+		res.Networks = append(res.Networks, &napi.NetworkResource{
+			DynamicPorts: dynamicPorts,
+		})
+	} else {
+		logrus.Fatal("missing required configuration option, Clients, in scenario")
+	}
+
 	task.Require(res)
 
 	var command string
@@ -37,10 +61,10 @@ func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.SetConfig("command", command)
 
-	if serviceName, ok := options.String("TargetService"); ok {
-		task.Env["SERVICE_NAME"] = serviceName
+	if tag, ok := options.String("TargetTag"); ok {
+		task.Env["SERVICE_TAG"] = tag
 	} else {
-		return nil, fmt.Errorf(`scenarios require a "TargetService" option be set, found none`)
+		return nil, fmt.Errorf(`scenarios require a "TargetTag" option be set, found none`)
 	}
 
 	if env, ok := options.Object("Env"); ok {
