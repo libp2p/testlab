@@ -3,6 +3,7 @@ data_dir = "/var/consul"
 log_level = "INFO"
 node_name = "testlab-dev-consul"
 server = true
+ui = true
 addresses {
     http = "0.0.0.0"
 }

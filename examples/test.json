@@ -1,9 +1,9 @@
 {
+  "Name": "p2ptest",
   "Options": {
     "Datacenters": ["dc1"],
     "Priority": 1
   },
-  "Name": "p2ptest",
   "Deployments": [
     {
       "Name": "peers",

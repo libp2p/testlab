@@ -1,7 +1,5 @@
 data_dir  = "/var/nomad"
 
-# bind_addr = "192.168.1.3" # the default
-
 server {
   enabled          = true
   bootstrap_expect = 1
