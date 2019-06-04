@@ -11,5 +11,8 @@ vm-binary: $(shell find . -type f -name '*.go')
 vm: vm-binary $(shell find automation/packer -type f)
 	PACKER_CACHE_DIR=./automation/packer/packer_cache packer build automation/packer/testlab-dev.json
 
+vm-virtualbox: vm-binary $(shell find automation/packer -type f)
+	PACKER_CACHE_DIR=./automation/packer/packer_cache packer build -only=virtualbox-iso automation/packer/testlab-dev.json
+
 vm-vmware: vm-binary $(shell find automation/packer -type f)
 	PACKER_CACHE_DIR=./automation/packer/packer_cache packer build -only=vmware-iso automation/packer/testlab-dev.json
