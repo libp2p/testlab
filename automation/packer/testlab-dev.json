@@ -111,7 +111,12 @@
       "inline": [
         "mv /ops/config/consul.service /etc/systemd/system/consul.service",
         "mv /ops/config/nomad.service /etc/systemd/system/nomad.service",
-        "mv /ops/testlab /usr/local/bin/"
+        "mv /ops/testlab /usr/local/bin/",
+        "echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers",
+        "echo 'Defaults:ubuntu !requiretty' >> /etc/sudoers",
+        "(test -f /home/ubuntu/VBoxGuestAdditions.iso && mount /home/ubuntu/VBoxGuestAdditions.iso /mnt -o ro && sh /mnt/VBoxLinuxAdditions.run) || true",
+        "systemctl enable consul",
+        "systemctl enable nomad"
       ]
     }
   ],
