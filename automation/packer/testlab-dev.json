@@ -45,6 +45,7 @@
       "vm_name": "testlab-dev",
       "ssh_username": "{{user `local_ssh_username`}}",
       "ssh_password": "{{user `local_ssh_password`}}",
+      "ssh_timeout": "20m",
       "shutdown_command": "echo '{{user `local_ssh_password`}}' | sudo -S shutdown -P now",
       "floppy_files": ["automation/packer/preseed/ks.cfg"],
       "boot_wait": "10s",
