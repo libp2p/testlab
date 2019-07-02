@@ -92,6 +92,9 @@ func (t *Topology) Jobs() ([]*napi.Job, [][]node.PostDeployFunc, error) {
 	if opts.Region == "" {
 		region = "global"
 	}
+	if opts.Priority == 0 {
+		opts.Priority = 50
+	}
 
 	phases, err := t.Phases()
 	if err != nil {
