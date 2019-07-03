@@ -186,7 +186,7 @@ An optional object as defined by the specific
 
 ##### `Dependencies: list`
 
-A list of **`Name`**s of deployments that must be scheduled before this one.
+A list of **`Name`** s of deployments that must be scheduled before this one.
 This feature exists for many reasons, such as allowing gateway nodes to go up
 before generic peers that might want to bootstrap on them, or ensuring a
 deployment of peers is launched before. The scenario that drives them is
@@ -197,21 +197,22 @@ scheduled. Cycles are not permitted.
 Scenario runners are the beating heart of testlab's simulation capabilities.
 It is their responsibility to drive the various deployments to create activity
 within the network. While it's not entirely necessary to use the `scenario` node
-to deploy drivers, it can be quite useful, especially in larger clusters.
+to deploy a scenario runner, it can be quite useful, especially in larger
+clusters.
 
 The scenario runner API is described by its
 [node implementation](testlab/node/scenario/scenario.go) **and is, at present, a
-work in progress**. Pull requests welcome!
+work in progress**. [Pull requests welcome!](#help-wanted)
 
 Scenario runners can expect a few environment variables to be present, to aid
 them in connecting to the peers they wish to control. These variables are mostly
 tailored towards helping them interact with Consul, to discover information
 about the peers they've been assigned to.
 
-- `DAEMON_CLIENTS` (int): The number of ports this scenario runner has been
-  allocated. These ports can be used for callbacks from daemons, such as how the
-  libp2p daemon uses callbacks to receive incoming streams, etc. **TODO**: This
-  should be become a more generic key, like`TESTLAB_PORTS`.
+- `DAEMON_CLIENTS` (int): The number of TCP/UDP ports this scenario runner has
+  been allocated. These ports can be used for callbacks from daemons, such as
+  how the libp2p daemon uses callbacks to receive incoming streams, etc.
+  **TODO**: This should be become a more generic key, like`TESTLAB_PORTS`.
 - `SERVICE_TAG` (string): The tag that will be applied to the Consul services
   this runner is meant to control. For example, if a scenario is controlling
   libp2p daemons, which expose a `p2pd` service for daemon control, it could
@@ -286,6 +287,12 @@ A description of their behavior and configuration options follows.
 Feel free to join in. All welcome. Open an [issue](https://github.com/libp2p/testlab/issues)!
 
 This repository falls under the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
+
+## Help Wanted
+
+If you've got a peer-to-peer application you'd like to start testing and
+benchmarking at scale, don't hesitate to submit a PR adding a `Node` for it!
+Please feel free to ask any questions in the issues or on #libp2p on freenode.
 
 ## License
 
