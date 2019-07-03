@@ -78,10 +78,10 @@ Kubernetes. Testlab's primary goal is to make it simple to launch large clusters
 of peer-to-peer applications to better understand how they function at scale.
 
 Testlab topologies are built around two main concepts: peer deployments and
-scenario runners. Generally, a peer deployment is set of instances of a
-peer-to-peer application, and a scenario runner is a special program launched
-in the cluster that can remotely control peer deployments to simulate activity
-within the network.
+scenario runners. Generally, a peer deployment describes a set of instances of a
+peer-to-peer application and, optionally, how they are connected. A scenario
+runner is a special program launched in the cluster that can remotely control
+peer deployments to simulate activity within the network.
 
 The goal output of a testlab topology is metrics data. While, in the future,
 it would be nice to support correctness tests, the current aim is to allow for
@@ -169,6 +169,44 @@ deployment of peers is launched before. The scenario that drives them is
 scheduled. Cycles are not permitted.
 
 ### Scenario Runners
+
+Scenario runners are the beating heart of testlab's simulation capabilities.
+It is their responsibility to drive the various deployments to create activity
+within the network. While it's not entirely necessary to use the `scenario` node
+to deploy drivers, it can be quite useful, especially in larger clusters.
+
+The scenario runner API is described by its
+[node implementation](testlab/node/scenario/scenario.go) **and is, at present, a
+work in progress**. Pull requests welcome!
+
+Scenario runners can expect a few environment variables to be present, to aid
+them in connecting to the peers they wish to control. These variables are mostly
+tailored towards helping them interact with Consul, to discover information
+about the peers they've been assigned to.
+
+- `DAEMON_CLIENTS` (int): The number of ports this scenario runner has been
+  allocated. These ports can be used for callbacks from daemons, such as how the
+  libp2p daemon uses callbacks to receive incoming streams, etc. **TODO**: This
+  should be become a more generic key, like`TESTLAB_PORTS`.
+- `SERVICE_TAG` (string): The tag that will be applied to the Consul services
+  this runner is meant to control. For example, if a scenario is controlling
+  libp2p daemons, which expose a `p2pd` service for daemon control, it could
+  query the consul cluster for `p2pd` services with the `$SERVICE_TAG` tag,
+  yielding the daemon control port of every daemon under their purview.
+- `CONSUL_*` (various): Additionally, the standard set of
+  [consul environment variables](https://www.consul.io/docs/commands/index.html#environment-variables)
+  will be present, so that the scenario may connect to the consul cluster.
+
+As will be documented below in the [node implementations](#node-implementations)
+section, users can pass in any additional environment variables they wish to
+their scenario runner via the `Env` option in their configuration.
+
+This set of environment variables is the extent of the scenario runner "API". It
+is up to the user how to use these. If working in golang, one can use the
+[nascent golang scenario runner API](scenario/scenario.go), which provides
+convenience functions for accessing consul and creating libp2p daemon clients.
+**TODO**: Generalize this library to focus entirely on consul access, and split
+libp2p specific functionality into a separate sub-package.
 
 ### Node API
 
