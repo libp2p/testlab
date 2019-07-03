@@ -278,9 +278,80 @@ A description of their behavior and configuration options follows.
 
 #### p2pd
 
+The p2pd plugin adds support for the
+[libp2p daemon](https://github.com/libp2p/go-libp2p-daemon). It will spawn
+libp2p peers, exposing the following services:
+
+- `libp2p`: The libp2p host.
+- `p2pd`: The libp2p daemon control endpoint, exposed so scenario runners can
+  manipulate the peer.
+- `metrics`: Prometheus scraping endpoint.
+
+##### Options
+
+libp2p daemons can be configured with the following options:
+
+- `PubsubRouter` string (optional): "gossipsub" or "floodsub", per users preference.
+- `Cid` string (optional): instead of looking for the `p2pd` binary on the local
+  filesystem, testlab can fetch a binary from IPFS by it's Cid.
+- `Fetch` string (optional): instead of looking for the `p2pd` binary on the local
+  filesystem, testlab can fetch a binary from an arbitrary (http/s) URL.
+- `Tags` list of strings (optional): Tags to apply to the service entries in
+  Consul. These make it possible for scenarios to reference the specific subset
+  of peers they're assigned to manipulate.
+- `Bootstrap` string (optional): The name of another deployment representing
+  the network's "bootstrapper" (well known entrypoint) nodes. These will be
+  automatically connected to when the daemon starts.
+
+##### Post Deploy Hook
+
+After the libp2p daemons are successfully scheduled on the cluster, testlab will
+query each peer for its peer ID and store it in the Consul KV store under the
+key `"peerid/<multiaddr to libp2p service>"` e.g. `peerid/ip4/127.0.0.1/tcp/6`.
+
 #### scenario
 
+The scenario plugin adds support for launching scenario runners in the testlab
+cluster. They must either be present on the clusters /usr/... path, or can be
+fetched from a URL like the libp2p daemon. Scenario runners will be provided
+environment variables as described above. 
+
+##### Options
+
+Scenario runners can be configured with the following options:
+
+- `Clients` int (required): The number of TCP/UDP ports to allocate for this
+  scenario. So-named because the libp2p daemon requires ports in order to
+  receive information pushed from the daemon. **TODO**: Generalize this.
+- `Fetch` string (optional): instead of looking for the `p2pd` binary on the
+  local filesystem, testlab can fetch a binary from an arbitrary (http/s) URL.
+
+##### Post Deploy Hook
+
+None.
+
 #### prometheus
+
+The prometheus plugin adds support for launching a
+[Prometheus](https://prometheus.io/) metrics collector. Testlab automatically
+configures prometheus to scrape Consul for all tasks exposing a `metrics`
+service.
+
+**NOTE**: As previously mentioned, all `CONSUL_*` and `NOMAD_*` environment
+variables must be defined in the terminal that `testlab` is executed from. If
+they are not, they will not be passed along to the prometheus configuration.
+This can result in prometheus failing to scrape Consul.
+
+**NOTE**: Currently, a prometheus node still needs to be manually added to the
+topology configuration. This may become automatic in the future.
+
+##### Options
+
+None.
+
+##### Post Deploy Hook
+
+None.
 
 ## Contribute
 

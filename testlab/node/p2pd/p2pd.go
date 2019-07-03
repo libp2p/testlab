@@ -86,7 +86,7 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 		}
 	}
 
-	if bootstrap, ok := options["Bootstrap"]; ok {
+	if bootstrap, ok := options.String("Bootstrap"); ok {
 		tmpl := `BOOTSTRAP_PEERS={{range $index, $service := service "%s.libp2p"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}/p2p/{{printf "/peerids/ip4/%%s/tcp/%%d" $service.Address $service.Port | key}}{{end}}`
 		tmpl = fmt.Sprintf(tmpl, bootstrap)
 		env := true
