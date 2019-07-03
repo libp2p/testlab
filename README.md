@@ -112,13 +112,13 @@ usable in development.
 - [Nomad environment variables](https://github.com/hashicorp/nomad/blob/v0.9.3/api/api.go#L217)
 - [Consul environment variables](https://github.com/hashicorp/consul/blob/v1.5.2/api/api.go#L24)
 
-Furthermore, users can optionall provide a path in the environment variable
+Furthermore, users can optionally provide a path in the environment variable
 `TESTLAB_ROOT` to define where the testlab metadata will be stored. This
 defaults to `/tmp/testlab`. **NOTE**: In order to have multiple testlab
 topologies in flight at the same time, one must define different `TESTLAB_ROOT`s
 for each topology.
 
-The testlab CLI has but two commands:
+The testlab CLI has two commands:
 
 - `testlab start <json configuration>`
   Parses, evaluates for correctness, and attempts to deploy a topology as
