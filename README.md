@@ -116,13 +116,16 @@ Furthermore, users can optionally provide a path in the environment variable
 `TESTLAB_ROOT` to define where the testlab metadata will be stored. This
 defaults to `/tmp/testlab`. **NOTE**: In order to have multiple testlab
 topologies in flight at the same time, one must define different `TESTLAB_ROOT`s
-for each topology.
+for each topology. This requirement exists as a result of testlab associating a
+single nomad deployment ID with each `TESTLAB_ROOT`, though this can be extended
+quite easily in the future.
 
 The testlab CLI has two commands:
 
 - `testlab start <json configuration>`
   Parses, evaluates for correctness, and attempts to deploy a topology as
-  defined by the provided json configuration file.
+  defined by the provided json configuration file. Once all of the peer-to-peer
+  nodes a scenario depends on are deployed, the scenario will be deployed.
 - `testlab stop`
   Stops the current running topology, identified by its `TESTLAB_ROOT`.
 
