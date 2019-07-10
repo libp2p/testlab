@@ -1,43 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [Testlab](#testlab)
-  - [Dependencies](#dependencies)
-    - [Development Cluster](#development-cluster)
-    - [Notes](#notes)
-    - [Production Cluster](#production-cluster)
-  - [Installation](#installation)
-  - [How it Works](#how-it-works)
-  - [Usage](#usage)
-    - [CLI](#cli)
-    - [Deployment Configuration](#deployment-configuration)
-      - [`Name: string`](#name-string)
-      - [`Options: object`](#options-object)
-      - [`Deployments: list of objects`](#deployments-list-of-objects)
-        - [`Name: string`](#name-string-1)
-        - [`Plugin: string`](#plugin-string)
-        - [`Quantity: int`](#quantity-int)
-        - [`Options: object`](#options-object-1)
-        - [`Dependencies: list`](#dependencies-list)
-    - [Scenario Runners](#scenario-runners)
-    - [Node API](#node-api)
-    - [Node Implementations](#node-implementations)
-      - [p2pd](#p2pd)
-        - [Options](#options)
-        - [Post Deploy Hook](#post-deploy-hook)
-      - [scenario](#scenario)
-        - [Options](#options-1)
-        - [Post Deploy Hook](#post-deploy-hook-1)
-      - [prometheus](#prometheus)
-        - [Options](#options-2)
-        - [Post Deploy Hook](#post-deploy-hook-2)
-  - [Contribute](#contribute)
-  - [Help Wanted](#help-wanted)
-  - [License](#license)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 # Testlab
 
 [![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://protocol.ai)
@@ -51,6 +11,45 @@
 🚧 This project is under active development! 🚧
 
 Check out the [ROADMAP](ROADMAP.md) to see what's coming.
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Dependencies](#dependencies)
+  - [Development Cluster](#development-cluster)
+  - [Notes](#notes)
+  - [Production Cluster](#production-cluster)
+- [Installation](#installation)
+- [How it Works](#how-it-works)
+- [Usage](#usage)
+  - [CLI](#cli)
+  - [Deployment Configuration](#deployment-configuration)
+    - [`Name: string`](#name-string)
+    - [`Options: object`](#options-object)
+    - [`Deployments: list of objects`](#deployments-list-of-objects)
+      - [`Name: string`](#name-string-1)
+      - [`Plugin: string`](#plugin-string)
+      - [`Quantity: int`](#quantity-int)
+      - [`Options: object`](#options-object-1)
+      - [`Dependencies: list`](#dependencies-list)
+  - [Scenario Runners](#scenario-runners)
+  - [Node API](#node-api)
+  - [Node Implementations](#node-implementations)
+    - [p2pd](#p2pd)
+      - [Options](#options)
+      - [Post Deploy Hook](#post-deploy-hook)
+    - [scenario](#scenario)
+      - [Options](#options-1)
+      - [Post Deploy Hook](#post-deploy-hook-1)
+    - [prometheus](#prometheus)
+      - [Options](#options-2)
+      - [Post Deploy Hook](#post-deploy-hook-2)
+- [Contribute](#contribute)
+- [Help Wanted](#help-wanted)
+- [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Dependencies
 
