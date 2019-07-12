@@ -164,7 +164,8 @@ The testlab CLI has two commands:
 ### Deployment Configuration
 
 The entrypoint for most projects using the testlab will be their deployment
-configuration, a JSON document declaring the desired network configuration.
+configuration, a JSON document declaring the desired network configuration. An
+example config can be found in the [examples directory](examples/test.json).
 It's broken into the following top level sections:
 
 #### `Name: string`
