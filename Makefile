@@ -2,6 +2,9 @@ build: $(shell find . -type f -name '*.go')
 	mkdir -p build
 	go build -o build/testlab ./testlab
 
+doctoc:
+	doctoc --notitle README.md
+
 clean:
 	rm -r build
 
