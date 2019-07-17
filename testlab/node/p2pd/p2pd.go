@@ -22,7 +22,6 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	command := "/usr/local/bin/p2pd"
 	args := []string{
 		"-listen", "/ip4/${NOMAD_IP_p2pd}/tcp/${NOMAD_PORT_p2pd}",
-		"-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}",
 		"-metricsAddr", "${NOMAD_ADDR_metrics}",
 		"-pubsub",
 	}
@@ -53,12 +52,19 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 		PortLabel:   "p2pd",
 		AddressMode: "host",
 	}
-	libp2pSvc := &napi.Service{
-		Name:        "libp2p",
-		PortLabel:   "libp2p",
-		AddressMode: "host",
+	task.Services = append(task.Services, metricsSvc, p2pdSvc)
+
+	if noBind, ok := options.Bool("Undialable"); ok && noBind {
+		args = append(args, "-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}")
+		libp2pSvc := &napi.Service{
+			Name:        "libp2p",
+			PortLabel:   "libp2p",
+			AddressMode: "host",
+		}
+		task.Services = append(task.Services, libp2pSvc)
+	} else {
+		args = append(args, "-noListenAddrs")
 	}
-	task.Services = append(task.Services, metricsSvc, p2pdSvc, libp2pSvc)
 
 	url := ""
 
