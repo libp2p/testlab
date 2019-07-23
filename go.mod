@@ -41,6 +41,7 @@ require (
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.6.2 // indirect
 	github.com/hashicorp/consul v1.4.3
 	github.com/hashicorp/go-gcp-common v0.0.0-20180425173946-763e39302965 // indirect
 	github.com/hashicorp/go-hclog v0.8.0 // indirect
@@ -71,15 +72,16 @@ require (
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/json-iterator/go v1.1.5 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a // indirect
+	github.com/libp2p/go-libp2p-core v0.0.9
 	github.com/libp2p/go-libp2p-daemon v0.0.1
-	github.com/libp2p/go-libp2p-peer v0.0.1
 	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b // indirect
 	github.com/michaelklishin/rabbit-hole v1.5.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure v1.0.0 // indirect
 	github.com/mitchellh/pointerstructure v0.0.0-20170205204203-f2329fcfa9e2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/multiformats/go-multiaddr v0.0.1
+	github.com/multiformats/go-multiaddr v0.0.4
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ory/dockertest v3.3.4+incompatible // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
@@ -94,16 +96,15 @@ require (
 	github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43 // indirect
 	github.com/urfave/cli v1.20.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
-	go.opencensus.io v0.19.1 // indirect
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421 // indirect
 	golang.org/x/sync v0.0.0-20190412183630-56d357773e84
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
 	google.golang.org/api v0.1.0 // indirect
-	google.golang.org/grpc v1.19.0 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/gorethink/gorethink.v4 v4.1.0 // indirect
 	gopkg.in/ory-am/dockertest.v2 v2.2.3 // indirect
 	gopkg.in/square/go-jose.v2 v2.3.0 // indirect
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 	k8s.io/api v0.0.0-20190301173355-16f65c82b8fa // indirect
 	k8s.io/apimachinery v0.0.0-20190301173222-2f7e9cae4418 // indirect
 	k8s.io/klog v0.2.0 // indirect
@@ -113,4 +114,4 @@ require (
 
 replace github.com/hashicorp/nomad v0.8.7 => github.com/hashicorp/nomad v0.9.0-beta2
 
-replace github.com/libp2p/go-libp2p-daemon v0.0.1 => github.com/libp2p/go-libp2p-daemon v0.0.4
+replace github.com/libp2p/go-libp2p-daemon v0.0.1 => github.com/libp2p/go-libp2p-daemon v0.2.0

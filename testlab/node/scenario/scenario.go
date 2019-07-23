@@ -19,7 +19,7 @@ func (s *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 	return nil
 }
 
-func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
+func (s *Node) Task(client *capi.Client, options utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("scenario", "exec")
 	task.Env = make(map[string]string)
 

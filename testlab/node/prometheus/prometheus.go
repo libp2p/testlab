@@ -27,17 +27,19 @@ scrape_configs:
     scrape_interval: 5s
 `
 
+const MetricsServiceName = "metrics"
+
 func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
 	return nil
 }
 
 // Task creates a nomad task specification for our prometheus metrics collector
-func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
+func (n *Node) Task(client *capi.Client, opts utils.NodeOptions) (*napi.Task, error) {
 	task := napi.NewTask("prometheus", "docker")
 
 	res := napi.DefaultResources()
 	res.Networks = []*napi.NetworkResource{
-		&napi.NetworkResource{
+		{
 			DynamicPorts: []napi.Port{
 				napi.Port{Label: "prometheus"},
 			},

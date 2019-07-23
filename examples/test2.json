@@ -1,0 +1,31 @@
+{
+  "Name": "p2ptest",
+  "Options": {
+    "Datacenters": ["dc1"],
+    "Priority": 1
+  },
+  "Deployments": [
+    {
+      "Name": "bootstrappers",
+      "Plugin": "ipfs",
+      "Quantity": 1,
+      "Options": {
+        "IpfsRootTemplate": "examples/ipfs-configs/0.4.21",
+        "Version": "v0.4.21",
+        "Tags": ["bootstrappers"]
+      }
+    },
+    {
+      "Name": "ipfspeers",
+      "Plugin": "ipfs",
+      "Quantity": 3,
+      "Options": {
+        "IpfsRootTemplate": "examples/ipfs-configs/0.4.21",
+        "Version": "v0.4.21",
+        "Bootstrap": "bootstrappers",
+        "Tags": ["ipfspeers"]
+      },
+      "Dependencies": ["bootstrappers"]
+    }
+  ]
+}
