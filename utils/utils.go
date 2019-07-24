@@ -9,6 +9,7 @@ import (
 
 	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
+	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -104,4 +105,33 @@ func PeerControlAddrs(consul *capi.Client, service string, tags []string) ([]ma.
 	}
 
 	return maddrs, nil
+}
+
+func PeerIDs(consul *capi.Client, addrs []string) ([]peer.ID, error) {
+	ids := make([]peer.ID, len(addrs))
+	for i, addr := range addrs {
+		pair, meta, err := consul.KV().Get(fmt.Sprintf("peerids%s", addr), nil)
+		if err != nil {
+			return nil, err
+		}
+		if pair == nil {
+			opts := &capi.QueryOptions{
+				WaitIndex: meta.LastIndex,
+				WaitTime:  10 * time.Second,
+			}
+			pair, meta, err = consul.KV().Get(addr, opts)
+			if err != nil {
+				return nil, err
+			}
+			if pair == nil {
+				return nil, fmt.Errorf("key not found %s", addr)
+			}
+		}
+		id, err := peer.IDB58Decode(string(pair.Value))
+		if err != nil {
+			return nil, err
+		}
+		ids[i] = id
+	}
+	return ids, nil
 }

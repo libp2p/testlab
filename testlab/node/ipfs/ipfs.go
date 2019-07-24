@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
 	iapi "github.com/ipfs/go-ipfs-http-client"
+	_ "github.com/libp2p/go-libp2p-circuit"
 	"github.com/libp2p/testlab/testlab/node/p2pd"
 	"github.com/libp2p/testlab/testlab/node/prometheus"
 	"github.com/libp2p/testlab/utils"
+	"github.com/sirupsen/logrus"
 )
 
 const APIServiceName = "ipfsapi"
@@ -99,6 +99,13 @@ func (n *Node) Task(consul *capi.Client, options utils.NodeOptions) (*napi.Task,
 		if err != nil {
 			return nil, err
 		}
+		ids, err := utils.PeerIDs(consul, addrs)
+		if err != nil {
+			return nil, err
+		}
+		for i, addr := range addrs {
+			addrs[i] = fmt.Sprintf("%s/p2p/%s", addr, ids[i])
+		}
 		bootstrappers = addrs
 	}
 
@@ -157,10 +164,18 @@ func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 			logrus.Error(err)
 			continue
 		}
-		err = utils.AddPeerIDToConsul(consul, keyInfo.ID().Pretty(), addr.String())
+		listenAddrs, err := client.Swarm().ListenAddrs(ctx)
 		if err != nil {
 			logrus.Error(err)
 			continue
+		}
+		logrus.Info(listenAddrs)
+		for _, listenAddr := range listenAddrs {
+			err = utils.AddPeerIDToConsul(consul, keyInfo.ID().Pretty(), listenAddr.String())
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
 		}
 	}
 

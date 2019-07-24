@@ -8,7 +8,7 @@ server {
 client {
   enabled       = true
   options {
-    "driver.raw_exec.enable" = "1"
+    driver.raw_exec.enable = "1"
   }
 }
 
