@@ -1,10 +1,15 @@
 package ipfs
 
 import (
+	"context"
 	"fmt"
+	"time"
+
+	"github.com/sirupsen/logrus"
 
 	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
+	iapi "github.com/ipfs/go-ipfs-http-client"
 	"github.com/libp2p/testlab/testlab/node/p2pd"
 	"github.com/libp2p/testlab/testlab/node/prometheus"
 	"github.com/libp2p/testlab/utils"
@@ -60,6 +65,15 @@ func (n *Node) Task(consul *capi.Client, options utils.NodeOptions) (*napi.Task,
 			Name:        APIServiceName,
 			PortLabel:   APIServiceName,
 			AddressMode: "host",
+			Checks: []napi.ServiceCheck{
+				{
+					Type:      "http",
+					Path:      "/api/v0/id",
+					Interval:  10 * time.Second,
+					Timeout:   5 * time.Second,
+					PortLabel: APIServiceName,
+				},
+			},
 		},
 		{
 			Name:        GatewayServiceName,
@@ -81,7 +95,7 @@ func (n *Node) Task(consul *capi.Client, options utils.NodeOptions) (*napi.Task,
 	bootstrappers := []string{}
 
 	if bootstrap, ok := options.String("Bootstrap"); ok {
-		addrs, err := utils.PeerControlAddrStrings(consul, p2pd.Libp2pServiceName, bootstrap)
+		addrs, err := utils.PeerControlAddrStrings(consul, p2pd.Libp2pServiceName, []string{bootstrap})
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +125,44 @@ func (n *Node) Task(consul *capi.Client, options utils.NodeOptions) (*napi.Task,
 }
 
 func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
-	//if bootstrapTag, ok := options.String("Bootstrap"); ok {
-	//}
+	var (
+		tags []string
+		ok   bool
+	)
+	if tags, ok = options.StringSlice("Tags"); !ok {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	err := utils.WaitService(ctx, consul, APIServiceName, tags)
+	if err != nil {
+		return err
+	}
+	addrs, err := utils.PeerControlAddrs(consul, APIServiceName, tags)
+	if err != nil {
+		return err
+	}
+
+	for _, addr := range addrs {
+		client, err := iapi.NewApi(addr)
+		if err != nil {
+			logrus.Error(err)
+			continue
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		keyInfo, err := client.Key().Self(ctx)
+		if err != nil {
+			logrus.Error(err)
+			continue
+		}
+		err = utils.AddPeerIDToConsul(consul, keyInfo.ID().Pretty(), addr.String())
+		if err != nil {
+			logrus.Error(err)
+			continue
+		}
+	}
+
 	return nil
 }

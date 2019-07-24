@@ -3,7 +3,6 @@ package ipfs
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -102,7 +101,6 @@ func ipfsConfiguration(root, containerRoot string, bootstrappers []string) ([]*n
 			ipfsConfigString := string(ipfsConfigBytes)
 			// TODO: don't do this
 			ipfsConfigString = strings.Replace(ipfsConfigString, "%%", `"`, -1)
-			fmt.Println(ipfsConfigString)
 			destPath := filepath.Join(containerRoot, info.Name())
 			template := &napi.Template{
 				EmbeddedTmpl: &ipfsConfigString,

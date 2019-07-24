@@ -96,7 +96,7 @@ func (n *Node) Task(consul *capi.Client, options utils.NodeOptions) (*napi.Task,
 	}
 
 	if bootstrap, ok := options.String("Bootstrap"); ok {
-		addrs, err := utils.PeerControlAddrStrings(consul, Libp2pServiceName, bootstrap)
+		addrs, err := utils.PeerControlAddrStrings(consul, Libp2pServiceName, []string{bootstrap})
 		if err != nil {
 			return nil, err
 		}

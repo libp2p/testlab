@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
+	"time"
 
 	capi "github.com/hashicorp/consul/api"
 	napi "github.com/hashicorp/nomad/api"
@@ -45,29 +47,50 @@ func AddConsulEnvToTask(t *napi.Task) {
 
 func AddPeerIDToConsul(consul *capi.Client, peerID string, addr string) error {
 	kv := &capi.KVPair{
-		Key: fmt.Sprintf("peerids%s", addr),
+		Key:   fmt.Sprintf("peerids%s", addr),
 		Value: []byte(peerID),
 	}
 	_, err := consul.KV().Put(kv, nil)
 	return err
 }
 
-func PeerControlAddrStrings(consul *capi.Client, service, tag string) ([]string, error) {
-	svcs, _, err := consul.Catalog().Service(service, tag, nil)
+func WaitService(ctx context.Context, consul *capi.Client, service string, tags []string) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(5 * time.Second):
+			svcs, _, err := consul.Catalog().ServiceMultipleTags(service, tags, nil)
+			if err != nil {
+				return err
+			}
+			for _, svc := range svcs {
+				if svc.Checks.AggregatedStatus() != capi.HealthPassing {
+					continue
+				}
+			}
+			return nil
+		}
+	}
+}
+
+func PeerControlAddrStrings(consul *capi.Client, service string, tags []string) ([]string, error) {
+	svcs, _, err := consul.Catalog().ServiceMultipleTags(service, tags, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	addrs := make([]string, len(svcs))
 	for i, svc := range svcs {
+		svc.Checks.AggregatedStatus()
 		addrs[i] = fmt.Sprintf("/ip4/%s/tcp/%d", svc.ServiceAddress, svc.ServicePort)
 	}
 
 	return addrs, nil
 }
 
-func PeerControlAddrs(consul *capi.Client, service, tag string) ([]ma.Multiaddr, error) {
-	addrs, err := PeerControlAddrStrings(consul, service, tag)
+func PeerControlAddrs(consul *capi.Client, service string, tags []string) ([]ma.Multiaddr, error) {
+	addrs, err := PeerControlAddrStrings(consul, service, tags)
 	if err != nil {
 		return nil, err
 	}
