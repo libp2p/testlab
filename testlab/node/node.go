@@ -37,6 +37,6 @@ type PostDeployFunc func(*capi.Client) error
 // nomad tasks. For now, this is left as an interface so plugin implementors can
 // include instantiation logic.
 type Node interface {
-	Task(*capi.Client, utils.NodeOptions) (*napi.Task, error)
+	TaskGroup(consul *capi.Client, name string, quantity int, options utils.NodeOptions) (*napi.TaskGroup, error)
 	PostDeploy(*capi.Client, utils.NodeOptions) error
 }

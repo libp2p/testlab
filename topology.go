@@ -22,18 +22,14 @@ type Deployment struct {
 }
 
 func (d *Deployment) TaskGroup(consul *capi.Client) (*napi.TaskGroup, node.PostDeployFunc, error) {
-	group := napi.NewTaskGroup(d.Name, d.Quantity)
-	group.Count = &d.Quantity
-
 	plugin, err := node.GetPlugin(d.Plugin)
 	if err != nil {
 		return nil, nil, err
 	}
-	task, err := plugin.Task(consul, d.Options)
+	group, err := plugin.TaskGroup(consul, d.Name, d.Quantity, d.Options)
 	if err != nil {
 		return nil, nil, err
 	}
-	group.AddTask(task)
 	postDeploy := func(c *capi.Client) error {
 		return plugin.PostDeploy(c, d.Options)
 	}

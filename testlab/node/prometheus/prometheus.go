@@ -33,8 +33,9 @@ func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 	return nil
 }
 
-// Task creates a nomad task specification for our prometheus metrics collector
-func (n *Node) Task(client *capi.Client, opts utils.NodeOptions) (*napi.Task, error) {
+// TaskGroup creates a nomad task specification for our prometheus metrics collector
+func (n *Node) TaskGroup(consul *capi.Client, name string, quantity int, options utils.NodeOptions) (*napi.TaskGroup, error) {
+	group := napi.NewTaskGroup(name, 1)
 	task := napi.NewTask("prometheus", "docker")
 
 	res := napi.DefaultResources()
@@ -47,7 +48,7 @@ func (n *Node) Task(client *capi.Client, opts utils.NodeOptions) (*napi.Task, er
 	}
 	mem := 1000
 
-	if memOpt, ok := opts.Int("Memory"); ok {
+	if memOpt, ok := options.Int("Memory"); ok {
 		mem = memOpt
 	}
 
@@ -85,5 +86,6 @@ func (n *Node) Task(client *capi.Client, opts utils.NodeOptions) (*napi.Task, er
 	}
 	task.Services = append(task.Services, svc)
 
-	return task, nil
+	group.AddTask(task)
+	return group, nil
 }
