@@ -21,19 +21,19 @@ type Deployment struct {
 	Dependencies []string
 }
 
-func (d *Deployment) TaskGroup(consul *capi.Client) (*napi.TaskGroup, node.PostDeployFunc, error) {
+func (d *Deployment) TaskGroups(consul *capi.Client) ([]*napi.TaskGroup, node.PostDeployFunc, error) {
 	plugin, err := node.GetPlugin(d.Plugin)
 	if err != nil {
 		return nil, nil, err
 	}
-	group, err := plugin.TaskGroup(consul, d.Name, d.Quantity, d.Options)
+	groups, err := plugin.TaskGroups(consul, d.Name, d.Quantity, d.Options)
 	if err != nil {
 		return nil, nil, err
 	}
 	postDeploy := func(c *capi.Client) error {
 		return plugin.PostDeploy(c, d.Options)
 	}
-	return group, postDeploy, nil
+	return groups, postDeploy, nil
 }
 
 type TopologyOptions struct {
@@ -126,12 +126,14 @@ func (t *Topology) JobsChan(ctx context.Context, consul *capi.Client) (<-chan Re
 				job.Datacenters = opts.Datacenters
 				for e, deployment := range phase {
 					logrus.Infof("deployment: %s", deployment.Name)
-					group, postDeploy, err := deployment.TaskGroup(consul)
+					groups, postDeploy, err := deployment.TaskGroups(consul)
 					if err != nil {
 						errch <- err
 						return
 					}
-					job.AddTaskGroup(group)
+					for _, group := range groups {
+						job.AddTaskGroup(group)
+					}
 					postDeployFuncs[e] = postDeploy
 				}
 				outch <- RenderedPhase{job, postDeployFuncs}
@@ -168,11 +170,13 @@ func (t *Topology) Jobs(consul *capi.Client) ([]*napi.Job, [][]node.PostDeployFu
 		job := napi.NewServiceJob(name, name, region, opts.Priority)
 		job.Datacenters = opts.Datacenters
 		for e, deployment := range phase {
-			group, postDeploy, err := deployment.TaskGroup(consul)
+			groups, postDeploy, err := deployment.TaskGroups(consul)
 			if err != nil {
 				return nil, nil, err
 			}
-			job.AddTaskGroup(group)
+			for _, group := range groups {
+				job.AddTaskGroup(group)
+			}
 			phasePostDeployFuncs[e] = postDeploy
 		}
 		jobs[i] = job

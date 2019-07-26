@@ -20,9 +20,9 @@ const GatewayServiceName = "ipfsgateway"
 
 type Node struct{}
 
-func (n *Node) tasks(consul *capi.Client, quantity int, options utils.NodeOptions) ([]*napi.Task, error) {
+func (n *Node) taskGroups(consul *capi.Client, baseName string, quantity int, options utils.NodeOptions) ([]*napi.TaskGroup, error) {
 	bootstrappers := []string{}
-	tasks := make([]*napi.Task, quantity)
+	groups := make([]*napi.TaskGroup, quantity)
 
 	if bootstrap, ok := options.String("Bootstrap"); ok {
 		addrs, err := utils.PeerControlAddrStrings(consul, p2pd.Libp2pServiceName, []string{bootstrap})
@@ -40,7 +40,8 @@ func (n *Node) tasks(consul *capi.Client, quantity int, options utils.NodeOption
 	}
 
 	for i := 0; i < quantity; i++ {
-		task := napi.NewTask(fmt.Sprintf("ipfs-%d", i), "docker")
+		task := napi.NewTask("ipfs", "docker")
+		group := napi.NewTaskGroup(fmt.Sprintf("%s-%d", baseName, i), 1)
 
 		version, ok := options.String("Version")
 		if !ok {
@@ -121,34 +122,20 @@ func (n *Node) tasks(consul *capi.Client, quantity int, options utils.NodeOption
 		task.Env = map[string]string{
 			"IPFS_LOGGING": "info",
 		}
-		tasks[i] = task
+		group.AddTask(task)
+		groups[i] = group
 	}
 
-	return tasks, nil
+	return groups, nil
 }
 
-/*
- NOTES TO SELF:
-
-for configuring these, we should really just make users provide a path that points to the
-ipfs config directory, containing the minimum data required to start a new node. that way, all
-we have to do is load the files into memory, do some variable substitution (let's use HCL) and
-environment variable injection (to the Template struct)
-*/
-
-func (n *Node) TaskGroup(consul *capi.Client, name string, quantity int, options utils.NodeOptions) (*napi.TaskGroup, error) {
-	group := napi.NewTaskGroup(name, 1)
-
-	tasks, err := n.tasks(consul, quantity, options)
+func (n *Node) TaskGroups(consul *capi.Client, name string, quantity int, options utils.NodeOptions) ([]*napi.TaskGroup, error) {
+	taskGroups, err := n.taskGroups(consul, name, quantity, options)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, task := range tasks {
-		group.AddTask(task)
-	}
-
-	return group, nil
+	return taskGroups, nil
 }
 
 func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {

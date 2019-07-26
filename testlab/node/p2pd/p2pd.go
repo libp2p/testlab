@@ -20,7 +20,7 @@ const DaemonServiceName = "p2pd"
 
 type Node struct{}
 
-func (n *Node) TaskGroup(consul *capi.Client, name string, quantity int, options utils.NodeOptions) (*napi.TaskGroup, error) {
+func (n *Node) TaskGroups(consul *capi.Client, name string, quantity int, options utils.NodeOptions) ([]*napi.TaskGroup, error) {
 	group := napi.NewTaskGroup(name, quantity)
 	task := napi.NewTask("p2pd", "exec")
 	command := "/usr/local/bin/p2pd"
@@ -119,7 +119,7 @@ func (n *Node) TaskGroup(consul *capi.Client, name string, quantity int, options
 	task.SetConfig("args", args)
 
 	group.AddTask(task)
-	return group, nil
+	return []*napi.TaskGroup{group}, nil
 }
 
 func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
