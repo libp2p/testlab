@@ -27,17 +27,20 @@ scrape_configs:
     scrape_interval: 5s
 `
 
+const MetricsServiceName = "metrics"
+
 func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
 	return nil
 }
 
-// Task creates a nomad task specification for our prometheus metrics collector
-func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
+// TaskGroups creates a nomad task specification for our prometheus metrics collector
+func (n *Node) TaskGroups(consul *capi.Client, name string, quantity int, options utils.NodeOptions) ([]*napi.TaskGroup, error) {
+	group := napi.NewTaskGroup(name, 1)
 	task := napi.NewTask("prometheus", "docker")
 
 	res := napi.DefaultResources()
 	res.Networks = []*napi.NetworkResource{
-		&napi.NetworkResource{
+		{
 			DynamicPorts: []napi.Port{
 				napi.Port{Label: "prometheus"},
 			},
@@ -45,7 +48,7 @@ func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
 	}
 	mem := 1000
 
-	if memOpt, ok := opts.Int("Memory"); ok {
+	if memOpt, ok := options.Int("Memory"); ok {
 		mem = memOpt
 	}
 
@@ -83,5 +86,6 @@ func (n *Node) Task(opts utils.NodeOptions) (*napi.Task, error) {
 	}
 	task.Services = append(task.Services, svc)
 
-	return task, nil
+	group.AddTask(task)
+	return []*napi.TaskGroup{group}, nil
 }

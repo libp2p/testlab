@@ -1,6 +1,7 @@
 package testlab
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -127,35 +128,56 @@ func (t *TestLab) WaitEval(evalID string) error {
 }
 
 func (t *TestLab) Start(topology *Topology) error {
-	jobs, postDeployFuncs, err := topology.Jobs()
-	if err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	phasech, pullch, errch := topology.JobsChan(ctx, t.consul)
+	select {
+	case err := <-errch:
 		return err
+	default:
 	}
 	deploymentFile, err := os.OpenFile(t.deploymentPath, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		return err
 	}
 	defer deploymentFile.Close()
-	for i, job := range jobs {
-		logrus.Infof("scheduling phase %d...", i)
-		resp, _, err := t.nomad.Jobs().Register(job, nil)
-		if err == nil {
-			logrus.Infof("rendering topology in evaluation id %s took %s", resp.EvalID, resp.RequestTime.String())
-			deploymentFile.WriteString(fmt.Sprintf("%s\n", *job.ID))
-			deploymentFile.Sync()
-		} else {
-			return err
-		}
-		if err = t.WaitEval(resp.EvalID); err != nil {
-			return err
-		}
-		logrus.Infof("phase %d scheduled, running post deploy hooks...", i)
-		for _, postDeployFunc := range postDeployFuncs[i] {
-			if err := postDeployFunc(t.consul); err != nil {
+	for i := 0; ;i++ {
+		select {
+		case <-pullch:
+			select {
+			case phase := <-phasech:
+				job := phase.Job
+				postDeployFuncs := phase.PostDeploymentFuncs
+				logrus.Infof("scheduling phase %d...", i)
+				resp, _, err := t.nomad.Jobs().Register(job, nil)
+				if err == nil {
+					logrus.Infof("rendering topology in evaluation id %s took %s", resp.EvalID, resp.RequestTime.String())
+					_, err = deploymentFile.WriteString(fmt.Sprintf("%s\n", *job.ID))
+					if err == nil {
+						err = deploymentFile.Sync()
+					}
+					if err != nil {
+						return err
+					}
+				} else {
+					return err
+				}
+				if err = t.WaitEval(resp.EvalID); err != nil {
+					return err
+				}
+				logrus.Infof("phase %d scheduled, running post deploy hooks...", i)
+				for _, postDeployFunc := range postDeployFuncs {
+					if err := postDeployFunc(t.consul); err != nil {
+						return err
+					}
+				}
+				logrus.Infof("phase %d complete", i)
+			case err = <-errch:
 				return err
 			}
+		case err = <-errch:
+			return err
 		}
-		logrus.Infof("phase %d complete", i)
 	}
 	return nil
 }

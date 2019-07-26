@@ -19,7 +19,8 @@ func (s *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 	return nil
 }
 
-func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
+func (s *Node) TaskGroups(consul *capi.Client, name string, quantity int, options utils.NodeOptions) ([]*napi.TaskGroup, error) {
+	group := napi.NewTaskGroup(name, quantity)
 	task := napi.NewTask("scenario", "exec")
 	task.Env = make(map[string]string)
 
@@ -90,5 +91,6 @@ func (s *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 		}
 	}
 
-	return task, nil
+	group.AddTask(task)
+	return []*napi.TaskGroup{group}, nil
 }

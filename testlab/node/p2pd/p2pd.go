@@ -3,7 +3,7 @@ package p2pd
 import (
 	"fmt"
 	"path/filepath"
-
+	"strings"
 	"io/ioutil"
 	"os"
 
@@ -15,9 +15,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const Libp2pServiceName = "libp2p"
+const DaemonServiceName = "p2pd"
+
 type Node struct{}
 
-func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
+func (n *Node) TaskGroups(consul *capi.Client, name string, quantity int, options utils.NodeOptions) ([]*napi.TaskGroup, error) {
+	group := napi.NewTaskGroup(name, quantity)
 	task := napi.NewTask("p2pd", "exec")
 	command := "/usr/local/bin/p2pd"
 	args := []string{
@@ -34,8 +38,8 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	res.Networks = []*napi.NetworkResource{
 		&napi.NetworkResource{
 			DynamicPorts: []napi.Port{
-				napi.Port{Label: "libp2p"},
-				napi.Port{Label: "p2pd"},
+				napi.Port{Label: Libp2pServiceName},
+				napi.Port{Label: DaemonServiceName},
 				napi.Port{Label: "metrics"},
 			},
 		},
@@ -48,17 +52,17 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 		AddressMode: "host",
 	}
 	p2pdSvc := &napi.Service{
-		Name:        "p2pd",
-		PortLabel:   "p2pd",
+		Name:        DaemonServiceName,
+		PortLabel:   DaemonServiceName,
 		AddressMode: "host",
 	}
 	task.Services = append(task.Services, metricsSvc, p2pdSvc)
 
-	if noBind, ok := options.Bool("Undialable"); ok && noBind {
+	if noBind, ok := options.Bool("Undialable"); !ok || !noBind {
 		args = append(args, "-hostAddrs", "/ip4/${NOMAD_IP_libp2p}/tcp/${NOMAD_PORT_libp2p}")
 		libp2pSvc := &napi.Service{
-			Name:        "libp2p",
-			PortLabel:   "libp2p",
+			Name:        Libp2pServiceName,
+			PortLabel:   Libp2pServiceName,
 			AddressMode: "host",
 		}
 		task.Services = append(task.Services, libp2pSvc)
@@ -78,7 +82,7 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 
 	if url != "" {
 		task.Artifacts = []*napi.TaskArtifact{
-			&napi.TaskArtifact{
+			{
 				GetterSource: utils.StringPtr(url),
 				RelativeDest: utils.StringPtr("p2pd"),
 			},
@@ -93,8 +97,14 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	}
 
 	if bootstrap, ok := options.String("Bootstrap"); ok {
-		tmpl := `BOOTSTRAP_PEERS={{range $index, $service := service "%s.libp2p"}}{{if ne $index 0}},{{end}}/ip4/{{$service.Address}}/tcp/{{$service.Port}}/p2p/{{printf "/peerids/ip4/%%s/tcp/%%d" $service.Address $service.Port | key}}{{end}}`
-		tmpl = fmt.Sprintf(tmpl, bootstrap)
+		addrs, err := utils.PeerControlAddrStrings(consul, Libp2pServiceName, []string{bootstrap})
+		if err != nil {
+			return nil, err
+		}
+		if len(addrs) == 0 {
+			return nil, fmt.Errorf("expected at least one %s.libp2p service, found none", bootstrap)
+		}
+		tmpl := fmt.Sprintf("BOOTSTRAP_PEERS=%s", strings.Join(addrs, ","))
 		env := true
 		template := &napi.Template{
 			EmbeddedTmpl: &tmpl,
@@ -108,7 +118,8 @@ func (n *Node) Task(options utils.NodeOptions) (*napi.Task, error) {
 	task.SetConfig("command", command)
 	task.SetConfig("args", args)
 
-	return task, nil
+	group.AddTask(task)
+	return []*napi.TaskGroup{group}, nil
 }
 
 func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error {
@@ -118,7 +129,7 @@ func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 		return nil
 	}
 
-	svcs, _, err := consul.Catalog().ServiceMultipleTags("p2pd", tags, nil)
+	svcs, _, err := consul.Catalog().ServiceMultipleTags(DaemonServiceName, tags, nil)
 	if err != nil {
 		return err
 	}
@@ -151,11 +162,7 @@ func (n *Node) PostDeploy(consul *capi.Client, options utils.NodeOptions) error 
 			return err
 		}
 		for _, addr := range addrs {
-			kv := &capi.KVPair{
-				Key:   fmt.Sprintf("peerids%s", addr.String()),
-				Value: []byte(peerID.Pretty()),
-			}
-			_, err = consul.KV().Put(kv, nil)
+			err = utils.AddPeerIDToConsul(consul, peerID.Pretty(), addr.String())
 			if err != nil {
 				return err
 			}
